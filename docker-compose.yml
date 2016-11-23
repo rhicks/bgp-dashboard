@@ -1,0 +1,40 @@
+# gobgp:
+#   build: ./gobgp/
+#   ports:
+#     - 179:179
+#   volumes_from:
+#     - data
+
+mongo:
+  build: ./mongo/
+  ports:
+    - 27017:27017
+  expose:
+    - 27017
+  volumes_from:
+    - data
+
+# blur:
+#   build: ./blur/
+#   ports:
+#     - 3003:3003
+#     - 3002:3002
+#   volumes_from:
+#     - data
+
+flask:
+  build: ./flask/
+  ports:
+    - 80:80
+  links:
+    - mongo
+  volumes_from:
+    - data
+    
+data:
+  image: ubuntu:14.04
+  volumes:
+    - ./flask/app:/var/www/app
+    - ./flask/app/log:/var/log/uwsgi/app
+    - .:/var/tmp
+  command: "true"
