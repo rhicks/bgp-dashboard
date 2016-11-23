@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify
+from flask import Flask, jsonify, url_for, request
 import json
 import pymongo
 from pymongo import MongoClient
@@ -78,7 +78,10 @@ def get_peers():
     
     for asn in peer_asns:
         next_hop_ips = db.bgp.find({"next_hop_asn": asn}).distinct("nexthop")
-        peers.append({'asn': asn, 'next_hop_ips': next_hop_ips})
+        if asn == None:
+            asn = 3701
+        url = request.url_root + 'bgp/api/v1.0/peer/' + str(asn) 
+        peers.append({'asn': asn, 'next_hop_ips': next_hop_ips, 'url': url})
     
     return jsonify({'peers': peers})
     

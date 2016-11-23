@@ -33,11 +33,8 @@ for k, v in data.items():
     prefixes.append({'prefix': prefix, 'nexthop': nexthop, 'as_path': as_path, 'next_hop_asn': next_hop_asn, 'origin_as': origin_as})
 
 db.bgp.drop()
+db.bgp.create_index('next_hop_asn')
 result = db.bgp.insert_many(prefixes)
 
-#cursor = db.restaurants.find({"borough": "Manhattan"})
 cursor = db.bgp.find({})
 print(db.bgp.count())
-
-# for document in cursor:
-#     print(document)
