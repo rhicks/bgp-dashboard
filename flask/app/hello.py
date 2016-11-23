@@ -4,6 +4,7 @@ import json
 import pymongo
 from pymongo import MongoClient
 import dns.resolver
+import ipaddress
 
 app = Flask(__name__)
 
@@ -40,9 +41,36 @@ tasks = [
     }
 ]
 
+def find_network(ip, netmask):
+    client = MongoClient(host='mongo')
+    db = client.bgp
+    network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
+    #print(network)
+    result = db.bgp.find_one({"prefix": network})
+    if result != None:
+        return(result)
+    elif netmask == 0:
+        return(None)
+    else:
+        return(find_network(ip, netmask-1))
+
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
     return jsonify({'tasks': tasks})
+    
+@app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
+def get_ip(ip):
+    client = MongoClient(host='mongo')
+    db = client.bgp
+    network = find_network(ip, netmask=24)
+    if network == None:
+        return jsonify({})
+    else:
+        return jsonify({'origin_as': network['origin_as'],
+                        'nexthop': network['nexthop'],
+                        'as_path': network['as_path'],
+                        'prefix': network['prefix'],
+                        'next_hop_asn': network['next_hop_asn']})
 
 @app.route('/bgp/api/v1.0/peer/<int:asn>', methods=['GET'])
 def get_prefixes(asn):

@@ -20,6 +20,7 @@ RUN mkdir -p /var/log/nginx/app /var/log/uwsgi/app /var/log/supervisor /var/www/
     && chown -R www-data:www-data /var/www/app \
     && chown -R www-data:www-data /var/log \
     && pip install pymongo \
-    && pip install dnspython
+    && pip install dnspython \
+    && pip install ipaddress
 
 CMD ["/usr/bin/supervisord"]
