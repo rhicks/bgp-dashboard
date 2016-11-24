@@ -53,6 +53,21 @@ def find_network(ip, netmask):
         return(None)
     else:
         return(find_network(ip, netmask-1))
+        
+def asn_name_query(asn):
+    if asn == None:
+        asn = 3701
+    if 64512 <= asn <= 65534:
+        return("RFC6996 - Private Use ASN")
+    else:
+        try:
+            query = 'as' + str(asn) + '.asn.cymru.com'
+            resolver = dns.resolver.Resolver()
+            answers = resolver.query(query, 'TXT')
+            for rdata in answers:
+                return(str(rdata).split("|")[-1].split(",",2)[0].strip())
+        except:
+            return("(DNS Error)")
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
@@ -88,10 +103,10 @@ def get_prefixes(asn):
                          'origin_as': prefix['origin_as'],
                          'nexthop_ip': prefix['nexthop'],
                          'next_hop_asn': prefix['next_hop_asn'],
-                         'as_path': prefix['as_path']})
+                         'as_path': prefix['as_path'],
+                         'name': asn_name_query(asn)})
     
     return jsonify({'prefix_list': prefixes})
-    
 
 @app.route('/bgp/api/v1.0/peers', methods=['GET'])
 def get_peers():

@@ -19,11 +19,17 @@ def asn_name_query(asn):
         # resolver.lifetime = 1
         try:
             query = 'as' + str(asn) + '.asn.cymru.com'
+            #print(query)
             resolver = dns.resolver.Resolver()
+            #print(resolver)
             answers = resolver.query(query, 'TXT')
+            #print(answers)
             for rdata in answers:
-                for txt_string in rdata.strings:
-                    return(txt_string.split('|')[-1].split(",", 2)[0].strip())
+                #print(rdata)
+                return(str(rdata).split("|")[-1].split(",",2)[0].strip())
+                # for txt_string in rdata.strings:
+                #     print(txt_string)
+                #     return(txt_string.split("|")[-1].split(",", 2)[0].strip())
         except:
             return("(DNS Error)")
 
@@ -66,6 +72,8 @@ peer_asns = db.bgp.distinct("next_hop_asn")
 next_hop_ips = db.bgp.distinct("nexthop")
 origin_asns =  db.bgp.distinct("origin_as")
 google = db.bgp.find({"next_hop_asn": 15169})
+isp = db.bgp.find({"origin_as": 15169})
+
 ip = '157.246.0.0'
 subnet_mask = 24
 
@@ -73,11 +81,13 @@ print("Total Prefixes: ", db.bgp.count())
 print("Total Peers: ", len(peer_asns))
 print("Next Hop IP Address: ", len(next_hop_ips))
 print("Origin ASNs: ", len(origin_asns))
+#print("ISP:", isp)
 
-print(find_network(ip, subnet_mask))
+#print(find_network(ip, subnet_mask))
 # print("Google: ")
-# for prefix in google:
-#     print(prefix)
+for prefix in isp:
+    #print(prefix)
+    print(asn_name_query(prefix['origin_as']))
 
 # for ip in next_hop_ips:
 #     print(reverse_dns_query(ip))
