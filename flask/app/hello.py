@@ -45,7 +45,6 @@ def find_network(ip, netmask):
     client = MongoClient(host='mongo')
     db = client.bgp
     network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
-    #print(network)
     result = db.bgp.find_one({"prefix": network})
     if result != None:
         return(result)
@@ -69,6 +68,23 @@ def asn_name_query(asn):
         except:
             return("(DNS Error)")
 
+def is_peer(asn):
+    client = MongoClient(host='mongo')
+    db = client.bgp
+    peers = db.bgp.distinct("next_hop_asn")
+    if asn in peers:
+        return True
+    else:
+        return False
+        
+def reverse_dns_query(ip):
+    try:
+        addr = dns.reversename.from_address(str(ip))
+        resolver = dns.resolver.Resolver()
+        return str(resolver.query(addr,"PTR")[0])[:-1]
+    except:
+        return("(DNS Error)")
+        
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
     return jsonify({'tasks': tasks})
@@ -85,7 +101,8 @@ def get_ip(ip):
                         'nexthop': network['nexthop'],
                         'as_path': network['as_path'],
                         'prefix': network['prefix'],
-                        'next_hop_asn': network['next_hop_asn']})
+                        'next_hop_asn': network['next_hop_asn'],
+                        'name': asn_name_query(network['origin_as'])})
 
 @app.route('/bgp/api/v1.0/peer/<int:asn>', methods=['GET'])
 def get_prefixes(asn):
@@ -107,6 +124,26 @@ def get_prefixes(asn):
                          'name': asn_name_query(asn)})
     
     return jsonify({'prefix_list': prefixes})
+    
+@app.route('/bgp/api/v1.0/asn/<int:asn>', methods=['GET'])
+def get_asn_prefixes(asn):
+    client = MongoClient(host='mongo')
+    db = client.bgp
+    prefixes = []
+    
+    google = db.bgp.find({"origin_as": asn})
+    
+    for prefix in google:
+        prefixes.append({'prefix': prefix['prefix'],
+                         'origin_as': prefix['origin_as'],
+                         'nexthop_ip': prefix['nexthop'],
+                         'nexthop_ip_dns': reverse_dns_query(prefix['nexthop']),
+                         'nexthop_asn': prefix['next_hop_asn'],
+                         'as_path': prefix['as_path'],
+                         'name': asn_name_query(asn)})
+    
+    # return jsonify({'prefix_list': prefixes})
+    return jsonify({'asn': asn, 'name': asn_name_query(asn), 'origin_prefix_count': google.count(), 'is_peer': is_peer(asn), 'origin_prefix_list': prefixes})
 
 @app.route('/bgp/api/v1.0/peers', methods=['GET'])
 def get_peers():
@@ -124,9 +161,34 @@ def get_peers():
         if asn == None:
             asn = 3701
         url = request.url_root + 'bgp/api/v1.0/peer/' + str(asn) 
-        peers.append({'asn': asn, 'next_hop_ips': next_hop_ips, 'url': url})
+        isp_origin_as = db.bgp.find({"origin_as": asn})
+        isp_nexthop_as = db.bgp.find({"next_hop_asn": asn})
+        if isp_nexthop_as.count() > isp_origin_as.count():
+            transit_provider = True
+        else:
+            transit_provider = False
+        peers.append({'asn': asn, 'name': asn_name_query(asn), 'next_hop_ips': next_hop_ips, 'origin_prefix_count': isp_origin_as.count(), 'nexthop_prefix_count': isp_nexthop_as.count(), 'transit_provider': transit_provider})
     
     return jsonify({'peers': peers})
+
+@app.route('/bgp/api/v1.0/asn/<int:asn>/transit', methods=['GET'])
+def get_transit_prefixes(asn):
+    client = MongoClient(host='mongo')
+    db = client.bgp
+    all_asns = db.bgp.find({})
+    prefixes = []
+
+    for prefix in all_asns:
+        if prefix['as_path']:
+            if asn in prefix['as_path']:
+                prefixes.append(prefix['prefix'])
+            else:
+                pass
+        else:
+            pass
+    
+    # return jsonify({'prefix_list': prefixes})
+    return jsonify({'asn': asn, 'name': asn_name_query(asn), 'tranist_prefix_count': len(prefixes), 'transit_prefix_list': prefixes})
     
     # with open('test-log.json', 'r') as f:
     #      data = json.load(f)

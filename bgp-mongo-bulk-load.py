@@ -34,6 +34,8 @@ for k, v in data.items():
 
 db.bgp.drop()
 db.bgp.create_index('next_hop_asn')
+db.bgp.create_index('prefix')
+db.bgp.create_index('origin_as')
 result = db.bgp.insert_many(prefixes)
 
 cursor = db.bgp.find({})
