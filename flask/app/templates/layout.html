@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>BGP Dashboard</title>
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://www.datatables.net/rss.xml">
+	<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.10/css/dataTables.bootstrap.min.css">
+	<script type="text/javascript" language="javascript" src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.10/js/dataTables.bootstrap.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+	<script type="text/javascript" class="init">
+  $(document).ready(function() {
+      $('#prefix_list').DataTable( {
+          "lengthMenu": [[1000, 250, 500, -1], [1000, 250, 500, "All"]],
+          "aaSorting": []
+      } );
+  } );
+
+  $(document).ready(function() {
+      $('#peers_list').DataTable( {
+          "lengthMenu": [[-1, 250, 500, 1000], ["All", 250, 500, 1000]],
+          "aaSorting": []
+      } );
+  } );
+
+	</script>
+</head>
+<body class="nav-sm">
+  <div class="container-fluid">
+    <div class="main_container">
+      <!-- top navigation -->
+      <br>
+      <div class="jumbotron">
+        <p><a href="/" class="btn btn-primary btn-lg" href="#" role="button">Home</a></p>
+        <h1>ASN 3701</h1>
+        <p>NERONET - Network for Education and Research in Oregon (NERO)</p>
+      </div>
+      <!-- /top navigation -->
+      <div class="right_col" role="main">
+        {% block content %} {% endblock %}
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

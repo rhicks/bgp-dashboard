@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify, url_for, request
+from flask import Flask, jsonify, url_for, request, render_template
 import json
+import requests
 import pymongo
 from pymongo import MongoClient
 import dns.resolver
@@ -84,7 +85,25 @@ def reverse_dns_query(ip):
         return str(resolver.query(addr,"PTR")[0])[:-1]
     except:
         return("(DNS Error)")
-        
+
+def peer_count():
+    client = MongoClient(host='mongo')
+    db = client.bgp
+    peer_asns = db.bgp.distinct("next_hop_asn")
+    return(len(peer_asns))
+
+@app.route('/', methods=['GET'])
+def index():
+    num_peers = peer_count()
+    return render_template('home.html', **locals())
+    # response = get_peers()
+    # #print(dir(response))
+    # peers = response.data
+    # num_peers = len(peers)
+    # print(num_peers)
+    # # return render_template('home.html', **locals())
+    # return app.response_class(peers, content_type='application/json')
+    
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
     return jsonify({'tasks': tasks})
