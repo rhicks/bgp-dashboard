@@ -1,6 +1,7 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import json
+import fileinput
 
 def myprint2(d):
   for k, v in d.items():
@@ -39,13 +40,15 @@ def locateByName(e,name):
 
     return None
 
-with open('log/log.json', 'r') as f:
-     data = json.load(f)
+# with open('log/log.json', 'r') as f:
+#      data = json.load(f)
 
 #myprint2(data)
 
-for k, v in data.items():
-    print("Prefix: ", v[0]['nlri']['prefix'])
+for line in fileinput.input():
+    v = json.loads(line)
+    if 'prefix' in v[0]['nlri']:
+        print("Prefix: ", v[0]['nlri']['prefix'])
     #print("AS Path: ", v[0]['attrs'][1]['as_paths'][0]['asns'])
     for attribute in v[0]['attrs']:
         if attribute['type'] == 3:
@@ -61,9 +64,21 @@ for k, v in data.items():
                 print("Origin ASN: ", attribute['as'])
             except:
                 print("Origin ASN: None", None)
+        elif attribute['type'] == 4:
+            try:
+                print("Metric: ", attribute['metric'])
+            except:
+                print("Metric", None)
+        elif attribute['type'] == 5:
+            try:
+                print("LocalPref: ", attribute['value'])
+            except:
+                print("LocalPref", None)
+    if 'withdrawal' in v[0]:
+        print("Withdrawal: ", v[0]['withdrawal'])
     #print("Origin ASN: ", v[0]['attrs'][2]['as'])
-    print()
-# 
-#     # if v == "age":
-#     #     print("age")
-#     #print("{0}".format(k))
+    print('-------------------------------------------')
+        # 
+        # # if v == "age":
+        # #     print("age")
+        # print("{0}".format(k))

@@ -1,9 +1,9 @@
-# gobgp:
-#   build: ./gobgp/
-#   ports:
-#     - 179:179
-#   volumes_from:
-#     - data
+gobgp:
+  build: ./gobgp/
+  ports:
+    - 179:179
+  volumes_from:
+    - data
 
 mongo:
   build: ./mongo/
@@ -13,14 +13,6 @@ mongo:
     - 27017
   volumes_from:
     - data
-
-# blur:
-#   build: ./blur/
-#   ports:
-#     - 3003:3003
-#     - 3002:3002
-#   volumes_from:
-#     - data
 
 flask:
   build: ./flask/

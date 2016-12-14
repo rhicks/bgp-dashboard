@@ -73,6 +73,7 @@ next_hop_ips = db.bgp.distinct("nexthop")
 origin_asns =  db.bgp.distinct("origin_as")
 google = db.bgp.find({"next_hop_asn": 15169})
 isp = db.bgp.find({"origin_as": 15169})
+communities = db.bgp.distinct("communities")
 
 ip = '157.246.0.0'
 subnet_mask = 24
@@ -83,11 +84,13 @@ print("Next Hop IP Address: ", len(next_hop_ips))
 print("Origin ASNs: ", len(origin_asns))
 #print("ISP:", isp)
 
+for comm in communities:
+    print('%s - %s' % (comm, db.bgp.find({'communities': {'$regex' : comm}}).count()))
 #print(find_network(ip, subnet_mask))
 # print("Google: ")
-for prefix in isp:
+#for prefix in isp:
     #print(prefix)
-    print(asn_name_query(prefix['origin_as']))
+#    print(asn_name_query(prefix['origin_as']))
 
 # for ip in next_hop_ips:
 #     print(reverse_dns_query(ip))
