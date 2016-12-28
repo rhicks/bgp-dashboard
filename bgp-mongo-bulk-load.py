@@ -68,14 +68,13 @@ def build_object(prefix, v):
                 local_pref = None
     if 'withdrawal' in v[0]:
         withdrawal = v[0]['withdrawal']
-        print(withdrawal)
     else:
         withdrawal = None
     if 'age' in v[0]:
         timestamp = v[0]['age']
     else:
         timestamp = None
-        
+
     data = {    'prefix': prefix,
                 'nexthop': nexthop,
                 'as_path': as_path,
@@ -88,16 +87,21 @@ def build_object(prefix, v):
                 'communities': communities,
                 'timestamp': timestamp
             }
-    
+
     return(data)
-    
+
 def mongo_update(data):
-    # print(data)
     if data['withdrawal'] == True:
         removed = db.bgp.delete_one({"prefix": data['prefix']})
-        print('%s - %s' % (removed, data['prefix']))
-    result = db.bgp.update({"prefix": data['prefix']}, data, upsert=True)
-    # print('%s - %s' % (result, data['prefix']))
+        print('Del: %s' % (data['prefix']))
+    else:
+        result = db.bgp.update({"prefix": data['prefix']}, data, upsert=True)
+        if result['nModified'] == 0:
+            print('Add: %s' % (data['prefix']))
+        elif result['nModified'] == 1:
+            print('Mod: %s' % (data['prefix']))
+        else:
+            print('???: %s' % (data['prefix']))
 
 
 for line in fileinput.input():
