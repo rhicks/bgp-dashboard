@@ -10,39 +10,6 @@ import time
 
 app = Flask(__name__)
 
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol',
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web',
-        'done': False
-    },
-    {
-        'id': 3,
-        'title': u'Learn Flask',
-        'description': u'Need to find a good Flask tutorial on the web',
-        'done': False
-    },
-    {
-        'id': 4,
-        'title': u'Learn BGP',
-        'description': u'Need to find a good BGP tutorial on the web',
-        'done': False
-    },
-    {
-        'id': 5,
-        'title': u'Learn Mongo',
-        'description': u'Need to find a good Mongo tutorial on the web',
-        'done': False
-    }
-]
-
 def find_network(ip, netmask):
     try:
         if ipaddress.ip_address(ip).version == 4:
@@ -133,14 +100,7 @@ def index():
 
 @app.route('/hello/', methods=['GET'])
 def hello_index():
-    # number_of_peers = peer_count()
-    # number_of_ipv4_prefixes = prefix_count(version=4)
-    # number_of_ipv6_prefixes = prefix_count(version=6)
     return render_template('hello.html', **locals())
-
-@app.route('/todo/api/v1.0/tasks', methods=['GET'])
-def get_tasks():
-    return jsonify({'tasks': tasks})
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
@@ -161,34 +121,15 @@ def get_ip(ip):
                         'local_pref': network['local_pref'],
                         'communities': network['communities']})
 
-@app.route('/bgp/api/v1.0/peer/<int:asn>', methods=['GET'])
-def get_prefixes(asn):
-    client = MongoClient(host='mongo')
-    db = client.bgp
-    prefixes = []
-
-    google = db.bgp.find({"next_hop_asn": asn})
-
-    for prefix in google:
-        prefixes.append({'prefix': prefix['prefix'],
-                         'origin_as': prefix['origin_as'],
-                         'nexthop_ip': prefix['nexthop'],
-                         'next_hop_asn': prefix['next_hop_asn'],
-                         'as_path': prefix['as_path'],
-                         'updated': epoch_to_date(prefix['timestamp']),
-                         'name': asn_name_query(asn)})
-
-    return jsonify({'prefix_list': prefixes})
-
 @app.route('/bgp/api/v1.0/asn/<int:asn>', methods=['GET'])
 def get_asn_prefixes(asn):
     client = MongoClient(host='mongo')
     db = client.bgp
     prefixes = []
 
-    google = db.bgp.find({"origin_as": asn})
+    routes = db.bgp.find({"origin_as": asn})
 
-    for prefix in google:
+    for prefix in routes:
         prefixes.append({'prefix': prefix['prefix'],
                          'origin_as': prefix['origin_as'],
                          'nexthop_ip': prefix['nexthop'],
@@ -200,7 +141,7 @@ def get_asn_prefixes(asn):
 
     return jsonify({'asn': asn,
                     'name': asn_name_query(asn),
-                    'origin_prefix_count': google.count(),
+                    'origin_prefix_count': routes.count(),
                     'is_peer': is_peer(asn),
                     'origin_prefix_list': prefixes})
 
