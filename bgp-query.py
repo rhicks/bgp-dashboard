@@ -6,7 +6,11 @@ from pymongo import MongoClient
 import dns.resolver
 import ipaddress
 from collections import Counter
+from itertools import islice
 
+def take(n, iterable):
+    "Return first n items of the iterable as a list"
+    return list(islice(iterable, n))
 
 def asn_name_query(asn):
     if asn == None:
@@ -59,7 +63,7 @@ def find_network(ip, netmask):
     else:
         return(find_network(ip, netmask-1))
 
-def avg_as_path():
+def avg_as_path_length():
     client = MongoClient()
     db = client.bgp
     as_path_counter = 0
@@ -67,16 +71,54 @@ def avg_as_path():
     all = db.bgp.find()
     for prefix in all:
         try:
-            # print(len(prefix['as_path']))
             as_path_counter += len(set(prefix['as_path']))
         except:
             pass
     print(round(as_path_counter/all.count(), 3))
-    # for path in as_paths:
-    #     print(path)
-    # print(len(as_paths))
 
-avg_as_path()
+
+def top_peers(count):
+    client = MongoClient()
+    db = client.bgp
+    top_peers_dict = {}
+    peers = db.bgp.distinct("next_hop_asn")
+
+    for peer in peers:
+        prefixes = db.bgp.find({"next_hop_asn": peer})
+        top_peers_dict[peer] = prefixes.count()
+    top_n = take(count, sorted(top_peers_dict.items(), key=lambda x: x[1], reverse=True))
+    for asn in top_n:
+        print("%d - %d - %s" % (asn[1], asn[0], asn_name_query(asn[0])))
+
+def ipv4_cidr_breakdown():
+    client = MongoClient()
+    db = client.bgp
+    all_prefixes = db.bgp.find()
+    ipv4_list = []
+    ipv6_list = []
+
+
+    for prefix in all_prefixes:
+        if prefix['ip_version'] == 4:
+            ipv4_list.append(int(prefix['prefix'].split('/',1)[1]))
+        if prefix['ip_version'] == 6:
+            ipv6_list.append(int(prefix['prefix'].split('/',1)[1]))
+
+    ipv4_count = list(Counter(ipv4_list).items())
+    print("### IPv4 CIDR Count ###")
+    for mask, count in ipv4_count:
+        print("Mask: /%d - Count: %d" % (mask, count))
+    print()
+    ipv6_count = list(Counter(ipv6_list).items())
+    print("### IPv6 CIDR Count ###")
+    for mask, count in ipv6_count:
+        print("Mask: /%d - Count: %d" % (mask, count))
+
+
+
+avg_as_path_length()
+top_peers(10)
+ipv4_cidr_breakdown()
 
 
 # client = MongoClient()
