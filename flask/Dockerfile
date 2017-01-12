@@ -8,20 +8,14 @@ RUN apt-get update && apt-get install -y \
     nginx supervisor
 COPY nginx/flask.conf /etc/nginx/sites-available/
 COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-# COPY app /var/www/app
 COPY app/requirements.txt /tmp/requirements.txt
 
 RUN mkdir -p /var/log/nginx/app /var/log/uwsgi/app /var/log/supervisor /var/www/app \
     && rm /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/flask.conf /etc/nginx/sites-enabled/flask.conf \
     && echo "daemon off;" >> /etc/nginx/nginx.conf \
-    # &&  pip install -r /var/www/app/requirements.txt \
     &&  pip install -r /tmp/requirements.txt \
     && chown -R www-data:www-data /var/www/app \
-    && chown -R www-data:www-data /var/log \
-    && pip install pymongo \
-    && pip install dnspython \
-    && pip install requests --upgrade \
-    && pip install ipaddress
+    && chown -R www-data:www-data /var/log
 
 CMD ["/usr/bin/supervisord"]
