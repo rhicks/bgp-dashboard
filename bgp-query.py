@@ -7,6 +7,33 @@ import dns.resolver
 import ipaddress
 from collections import Counter
 from itertools import islice
+import pprint
+
+class Stats(object):
+    def __init__(self):
+        self.peer_count = 0
+        self.ipv4_table_size = 0
+        self.ipv6_table_size = 0
+        self.nexthop_ip_count = 0
+        self.avg_as_path_length = 0
+        self.top_n_peers = None
+        self.cidr_breakdown = None
+        self.communities = None
+
+    def get_json(self):
+        return({'peer_count': self.peer_count,
+                        'ipv4_table_size': self.ipv4_table_size,
+                        'ipv6_table_size': self.ipv6_table_size,
+                        'nexthop_ip_count': self.nexthop_ip_count,
+                        'avg_as_path_length': self.avg_as_path_length,
+                        'top_n_peers': self.top_n_peers,
+                        'cidr_breakdown': self.cidr_breakdown,
+                        'communities': self.communities})
+
+    def update_stats(self):
+        self.avg_as_path_length = avg_as_path_length()
+        self.top_n_peers = top_peers(10)
+
 
 def take(n, iterable):
     "Return first n items of the iterable as a list"
@@ -55,13 +82,15 @@ def avg_as_path_length():
     as_path_counter = 0
 
     all = db.bgp.find()
+    # # print(len([prefix['as_path'] for prefix in all]))
+    # print({k:all.count(k) for k in set(all)})
     for prefix in all:
         try:
             as_path_counter += len(set(prefix['as_path']))
         except:
             pass
     path_length = round(as_path_counter/all.count(), 3)
-    return json.dumps({'avg_as_path_length': path_length})
+    return(path_length)
 
 
 def top_peers(count):
@@ -79,7 +108,7 @@ def top_peers(count):
             'asn': asn[0],
             'count': asn[1],
             'name': asn_name_query(asn[0])})
-    return(json.dumps(json_data, indent=2))
+    return(json_data)
 
 
 def cidr_breakdown():
@@ -132,7 +161,11 @@ def communities_count():
     return(json.dumps(json_data, indent=2))
 
 
-print(avg_as_path_length())
-print(top_peers(10))
-print(cidr_breakdown()[0])
-print(communities_count())
+#print(avg_as_path_length())
+# print(top_peers(10))
+# print(cidr_breakdown()[0])
+# print(communities_count())
+myStats = Stats()
+pprint.pprint(myStats.get_json(), width=1)
+myStats.update_stats()
+pprint.pprint(myStats.get_json(), width=1)
