@@ -182,7 +182,7 @@ def index():
 def hello_index():
     data = myStats.get_data()
     top_peers = data['top_n_peers']
-    print(type(top_peers))
+    cidr_breakdown = data['cidr_breakdown']
     return render_template('hello.html', **locals())
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
