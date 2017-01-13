@@ -144,61 +144,19 @@
                           <div class="clearfix"></div>
                         </div>
                         <ul class="list-unstyled top_profiles scroll-view">
+                          {% for peer in top_peers %}
                           <li class="media event">
                             <a class="pull-left border-blue profile_thumb">
                               <i class="fa fa-arrows-alt blue"></i>
                             </a>
                             <div class="media-body">
-                              <a class="title" href="#">ASN 3356</a>
-                              <p><strong>345,543</strong> Prefixes </p>
-                              <p> <small>LEVEL3 - Level 3 Communications</small>
+                              <a class="title" href="#">ASN {{ peer.asn }}</a>
+                              <p><strong>{{ '{0:,}'.format(peer.count) }}</strong> Prefixes </p>
+                              <p> <small>{{ peer.name }}</small>
                               </p>
                             </div>
                           </li>
-                          <li class="media event">
-                            <a class="pull-left border-blue profile_thumb">
-                              <i class="fa fa-arrows-alt blue"></i>
-                            </a>
-                            <div class="media-body">
-                              <a class="title" href="#">ASN 3701</a>
-                              <p><strong>40,570 </strong> Prefixes </p>
-                              <p> <small>NERONET - Network for Education and Research in Oregon (NERO)</small>
-                              </p>
-                            </div>
-                          </li>
-                          <li class="media event">
-                            <a class="pull-left border-blue profile_thumb">
-                              <i class="fa fa-arrows-alt blue"></i>
-                            </a>
-                            <div class="media-body">
-                              <a class="title" href="#">ASN 11164</a>
-                              <p><strong>60,974 </strong> Prefixes </p>
-                              <p> <small>INTERNET2-TRANSITRAIL-CPS - Internet2</small>
-                              </p>
-                            </div>
-                          </li>
-                          <li class="media event">
-                            <a class="pull-left border-blue profile_thumb">
-                              <i class="fa fa-arrows-alt blue"></i>
-                            </a>
-                            <div class="media-body">
-                              <a class="title" href="#">ASN 11537</a>
-                              <p><strong>5,755 </strong> Prefixes </p>
-                              <p> <small>ABILENE - Internet2</small>
-                              </p>
-                            </div>
-                          </li>
-                          <li class="media event">
-                            <a class="pull-left border-blue profile_thumb">
-                              <i class="fa fa-arrows-alt blue"></i>
-                            </a>
-                            <div class="media-body">
-                              <a class="title" href="#">ASN 6939</a>
-                              <p><strong>40,570 </strong> Prefixes </p>
-                              <p> <small>HURRICANE - Hurricane Electric</small>
-                              </p>
-                            </div>
-                          </li>
+                          {% endfor %}
                         </ul>
                       </div>
                     </div>
@@ -637,14 +595,14 @@
       });
     </script>
     <!-- /bootstrap-daterangepicker -->
-    
+
     <!-- <script type="text/javascript">
     $(function() {
         /** This code runs when everything has been loaded on the page */
         /* Inline sparklines take their values from the contents of the tag */
-        $('.inlinesparkline').sparkline(); 
+        $('.inlinesparkline').sparkline();
 
-        /* Sparklines can also take their values from the first argument 
+        /* Sparklines can also take their values from the first argument
         passed to the sparkline() function */
         var myvalues = [10,8,5,7,4,4,1,10,8,5,7,4,4,1,10,8,5,7,4,4,1,10,8,5,7,4,4,100];
         $('.dynamicsparkline').sparkline(myvalues);
@@ -652,14 +610,14 @@
         /* The second argument gives options such as chart type */
         $('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
 
-        /* Use 'html' instead of an array of values to pass options 
+        /* Use 'html' instead of an array of values to pass options
         to a sparkline with data in the tag */
         $('.inlinebar').sparkline('html', {type: 'bar', barColor: 'red'} );
     });
     </script> -->
-        
+
     <script>
-  
+
   function up_or_down_checker(css_tag, data, json_tag)
   {
     var myDateFormat  = moment().format('MMM D YYYY, H:mm:ss');
@@ -702,17 +660,17 @@
         up_or_down_checker('ipv6TableSize', data, 'ipv6_table_size');
         up_or_down_checker('nexthopIPCount', data, 'nexthop_ip_count');
       }
-      
+
       update_counters.count += 1;
-    
+
       jQuery('#peersID').text(data['peer_count'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#ipv4TableSize').text(data['ipv4_table_size'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#ipv6TableSize').text(data['ipv6_table_size'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#nexthopIPCount').text(data['nexthop_ip_count'].toLocaleString('en-US', {minimumFractionDigits: 0}));
-      $('.peers_count_sparkline').sparkline(peer_count_sparkline_data);
-      $('.ipv4_table_sparkline').sparkline(ipv4_table_sparkline_data);
-      $('.ipv6_table_sparkline').sparkline(ipv6_table_sparkline_data);
-      $('.nexthop_count_sparkline').sparkline(nexthop_count_sparkline_data);
+      jQuery('.peers_count_sparkline').sparkline(peer_count_sparkline_data);
+      jQuery('.ipv4_table_sparkline').sparkline(ipv4_table_sparkline_data);
+      jQuery('.ipv6_table_sparkline').sparkline(ipv6_table_sparkline_data);
+      jQuery('.nexthop_count_sparkline').sparkline(nexthop_count_sparkline_data);
 
       //$('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
       if (peer_count_sparkline_data.length >= 200)
@@ -726,7 +684,7 @@
       ipv4_table_sparkline_data.push(data['ipv4_table_size']);
       ipv6_table_sparkline_data.push(data['ipv6_table_size']);
       nexthop_count_sparkline_data.push(data['nexthop_ip_count']);
-      
+
     });
   }
 

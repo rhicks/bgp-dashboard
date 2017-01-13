@@ -180,6 +180,9 @@ def index():
 
 @app.route('/hello/', methods=['GET'])
 def hello_index():
+    data = myStats.get_data()
+    top_peers = data['top_n_peers']
+    print(type(top_peers))
     return render_template('hello.html', **locals())
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
@@ -308,6 +311,18 @@ class Stats(object):
                         'communities':        self.communities,
                         'timestamp':          self.timestamp})
 
+    def get_data(self):
+        return        ({'peer_count':         self.peer_counter,
+                        'ipv4_table_size':    self.ipv4_table_size,
+                        'ipv6_table_size':    self.ipv6_table_size,
+                        'nexthop_ip_count':   self.nexthop_ip_counter,
+                        'avg_as_path_length': self.avg_as_path_length,
+                        'top_n_peers':        self.top_n_peers,
+                        'cidr_breakdown':     self.cidr_breakdown,
+                        'communities':        self.communities,
+                        'timestamp':          self.timestamp})
+
+
     def update_stats(self):
         self.peer_counter = peer_count()
         self.ipv4_table_size = prefix_count(4)
@@ -317,13 +332,15 @@ class Stats(object):
 
     def update_advanced_stats(self):
         self.avg_as_path_length = avg_as_path_length()
-        self.top_n_peers = top_peers(10)
+        self.top_n_peers = top_peers(5)
         self.cidr_breakdown = cidr_breakdown()
         self.communities = communities_count()
         self.timestamp = epoch_to_date(time.time())
 
 sched = BackgroundScheduler()
 myStats = Stats()
+threading.Thread(target=myStats.update_stats).start()
+threading.Thread(target=myStats.update_advanced_stats).start()
 sched.add_job(myStats.update_stats, 'interval', seconds=5)
 sched.add_job(myStats.update_advanced_stats, 'interval', seconds=30)
 sched.start()
