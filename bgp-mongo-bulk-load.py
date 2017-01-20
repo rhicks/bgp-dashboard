@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import json
 import pymongo
@@ -7,7 +7,7 @@ from datetime import datetime
 import fileinput
 import ipaddress
 
-client = MongoClient()
+client = MongoClient('mongo')
 db = client.bgp
 db.bgp.drop()
 db.bgp.create_index('next_hop_asn')
