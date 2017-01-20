@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import json
 import pymongo
@@ -40,7 +40,7 @@ def take(n, iterable):
     return list(islice(iterable, n))
 
 def db_connect():
-    client = MongoClient()
+    client = MongoClient('mongo')
     return(client.bgp)
 
 def asn_name_query(asn):
@@ -160,12 +160,46 @@ def communities_count():
 
     return(json.dumps(json_data, indent=2))
 
+def customers():
+    db = db_connect()
+    json_data = []
+    myset = set()
+
+    customers_list = db.bgp.find({'communities': '3701:370'})
+    # set(customers_list)
+    for prefix in customers_list:
+        myset.add(prefix['next_hop_asn'])
+        # print(asn_name_query(prefix['next_hop_asn']))
+    for asn in myset:
+        ipv4_count  = db.bgp.find({"next_hop_asn": asn,"ip_version": 4}).count()
+        ipv6_count = db.bgp.find({"next_hop_asn": asn,"ip_version": 6}).count()
+        print(asn_name_query(asn), ipv6_count, ipv4_count)
+
+def search(query):
+    db = db_connect()
+    number = 0
+    string = None
+    for t in query.split():
+        try:
+            number = int(t)
+        except:
+            pass
+    try:
+        query = query.lower()
+    except:
+        pass
+    print(number)
+    result = db.bgp.find({ "$or": [{ 'next_hop_asn': int(number)}, {'prefix': {'$regex': str(query)}}] })
+    for hit in result:
+        print(hit)
 
 #print(avg_as_path_length())
 # print(top_peers(10))
 # print(cidr_breakdown()[0])
 # print(communities_count())
-myStats = Stats()
-pprint.pprint(myStats.get_json(), width=1)
-myStats.update_stats()
-pprint.pprint(myStats.get_json(), width=1)
+# myStats = Stats()
+# pprint.pprint(myStats.get_json(), width=1)
+# myStats.update_stats()
+# pprint.pprint(myStats.get_json(), width=1)
+# print(customers())
+search("2605:BC80")
