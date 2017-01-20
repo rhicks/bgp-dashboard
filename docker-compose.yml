@@ -7,8 +7,6 @@ gobgp:
 
 mongo:
   build: ./mongo/
-  ports:
-    - 27017:27017
   expose:
     - 27017
   volumes_from:
@@ -22,7 +20,7 @@ flask:
     - mongo
   volumes_from:
     - data
-    
+
 data:
   image: ubuntu:14.04
   volumes:
