@@ -97,43 +97,84 @@
                 </div>
               </div>
             </div>
+            <!--  Second Row -->
+            <div class="row top_tiles">
+              <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                <div class="tile-stats">
+                  <div class="icon"><i id="avgAsPathLengthIcon"></i></div>
+                  <div class="count" id="avgAsPathLength">0</div>
+                  <h3>Average AS Path Length</h3>
+                  <div>
+                    <p class="count_bottom pull-right" id="avgAsPathLengthChangeTime"></p>
+                    <p>Shorter is better</p>
+                  </div>
+                  <div class="clearfix"></div>
+                  <p class="avg_as_path_length_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
+                </div>
+              </div>
+              <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                <div class="tile-stats">
+                  <div class="icon"><i id="customerCountIcon"></i></div>
+                  <div class="count" id="customerCount">0</div>
+                  <h3>BGP Customers</h3>
+                  <div>
+                    <p class="count_bottom pull-right" id="customerCountChangeTime"></p>
+                    <p>BGP Connect Customers</p>
+                  </div>
+                  <div class="clearfix"></div>
+                  <p class="customer_count_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
+                </div>
+              </div>
+              <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                <div class="tile-stats">
+                  <div class="icon"><i id="customerPrefixesIcon"></i></div>
+                  <div class="count" id="customerPrefixes">0</div>
+                  <h3>Customer Prefixes</h3>
+                  <div>
+                    <p class="count_bottom pull-right" id="customerPrefixesChangeTime"></p>
+                    <p>Customer & Orginated Prefix Count</p>
+                  </div>
+                  <div class="clearfix"></div>
+                  <p class="customer_prefixes_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
+                </div>
+              </div>
+            </div>
 
             <div class="row">
               <div class="col-md-12">
                 <div class="x_panel">
                   <div class="x_title">
-                    <h2>Transit vs. Non-Transit <small>Number of Prefixes</small></h2>
+                    <h2>Peer Data <small>Table</small></h2>
                     <div class="clearfix"></div>
                   </div>
                   <div class="x_content">
                     <div class="col-md-9 col-sm-12 col-xs-12">
-                      <div class="demo-container" style="height:280px">
-                        <div id="placeholder33x" class="demo-placeholder"></div>
-                      </div>
-                      <div class="tiles">
-                        <div class="col-md-4 tile">
-                          <span>Downstream BGP Customers</span>
-                          <h2>12</h2>
-                          <span class="sparkline11 graph" style="height: 160px;">
-                                          <canvas width="200" height="60" style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
-                                      </span>
-                        </div>
-                        <div class="col-md-4 tile">
-                          <span>BGP Updates</span>
-                          <h2>40 Last</h2>
-                          <span class="sparkline22 graph" style="height: 160px;">
-                                          <canvas width="200" height="60" style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
-                                      </span>
-                        </div>
-                        <div class="col-md-4 tile">
-                          <span>Advertised BGP Prefixes</span>
-                          <h5>IPv4:21, IPv6:5</h5>
-                          <span class="sparkline22 graph" style="height: 160px;">
-                                          <canvas width="200" height="60" style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
-                                      </span>
-                        </div>
-                      </div>
+                      <div class="demo-container">
+                        <table id="datatable" class="table table-striped table-bordered">
+                      <thead>
+                        <tr>
+                          <th>ASN</th>
+                          <th>Name</th>
+                          <th>IPv4 Prefixes</th>
+                          <th>IPv6 Prefixes</th>
+                          <th>Details</th>
+                        </tr>
+                      </thead>
 
+
+                      <tbody>
+                        {% for peer in peers %}
+                        <tr>
+                          <td>{{ peer.asn }}</td>
+                          <td>{{ peer.name }}</td>
+                          <td>{{ peer.ipv4_count }}</td>
+                          <td>{{ peer.ipv6_count }}</td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">Details</a></td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                      </div>
                     </div>
 
                     <div class="col-md-3 col-sm-12 col-xs-12">
@@ -172,47 +213,18 @@
               <div class="col-md-12">
                 <div class="x_panel">
                   <div class="x_title">
-                    <h2>Weekly Summary <small>Activity shares</small></h2>
-                    <ul class="nav navbar-right panel_toolbox">
-                      <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                      </li>
-                      <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
-                        <ul class="dropdown-menu" role="menu">
-                          <li><a href="#">Settings 1</a>
-                          </li>
-                          <li><a href="#">Settings 2</a>
-                          </li>
-                        </ul>
-                      </li>
-                      <li><a class="close-link"><i class="fa fa-close"></i></a>
-                      </li>
-                    </ul>
+                    <h2>BGP Community Details <small>Prefixes</small></h2>
                     <div class="clearfix"></div>
                   </div>
                   <div class="x_content">
-
-                    <div class="row" style="border-bottom: 1px solid #E0E0E0; padding-bottom: 5px; margin-bottom: 5px;">
-                      <div class="col-md-7" style="overflow:hidden;">
-                        <span class="sparkline_one" style="height: 160px; padding: 10px 25px;">
-                                      <canvas width="200" height="60" style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
-                                  </span>
-                        <h4 style="margin:18px">Weekly sales progress</h4>
-                      </div>
-
-                      <div class="col-md-5">
+                    <div class="row" style="border-bottom: 0px solid #E0E0E0; padding-bottom: 5px; margin-bottom: 5px;">
+                      <div class="col-md-12">
                         <div class="row" style="text-align: center;">
-                          <div class="col-md-4">
-                            <canvas id="canvas1i" height="110" width="110" style="margin: 5px 10px 10px 0"></canvas>
-                            <h4 style="margin:0">Bounce Rates</h4>
+                          <div id="graph_donut1" class="col-md-4" style="width:50%; height:180px;">
+                            <h4 style="margin:0">Peering Prefix Count</h4>
                           </div>
-                          <div class="col-md-4">
-                            <canvas id="canvas1i2" height="110" width="110" style="margin: 5px 10px 10px 0"></canvas>
-                            <h4 style="margin:0">New Traffic</h4>
-                          </div>
-                          <div class="col-md-4">
-                            <canvas id="canvas1i3" height="110" width="110" style="margin: 5px 10px 10px 0"></canvas>
-                            <h4 style="margin:0">Device Share</h4>
+                          <div id="graph_donut2" class="col-md-4" style="width:50%; height:180px;">
+                            <h4 style="margin:0">Transt vs. Non-Transit</h4>
                           </div>
                         </div>
                       </div>
@@ -280,16 +292,6 @@
     <script src="../static/vendors/Chart.js/dist/Chart.min.js"></script>
     <!-- jQuery Sparklines -->
     <script src="../static/vendors/jquery-sparkline/dist/jquery.sparkline.min.js"></script>
-    <!-- Flot -->
-    <script src="../static/vendors/Flot/jquery.flot.js"></script>
-    <script src="../static/vendors/Flot/jquery.flot.pie.js"></script>
-    <script src="../static/vendors/Flot/jquery.flot.time.js"></script>
-    <script src="../static/vendors/Flot/jquery.flot.stack.js"></script>
-    <script src="../static/vendors/Flot/jquery.flot.resize.js"></script>
-    <!-- Flot plugins -->
-    <script src="../static/vendors/flot.orderbars/js/jquery.flot.orderBars.js"></script>
-    <script src="../static/vendors/flot-spline/js/jquery.flot.spline.min.js"></script>
-    <script src="../static/vendors/flot.curvedlines/curvedLines.js"></script>
     <!-- DateJS -->
     <script src="../static/vendors/DateJS/build/date.js"></script>
     <!-- bootstrap-daterangepicker -->
@@ -297,362 +299,21 @@
     <script src="../static/vendors/bootstrap-daterangepicker/daterangepicker.js"></script>
     <script src="../static/vendors/raphael/raphael.min.js"></script>
     <script src="../static/vendors/morris.js/morris.js"></script>
+    <script src="../static/vendors/datatables.net/js/jquery.dataTables.min.js"></script>
 
 
     <!-- Custom Theme Scripts -->
     <!-- <script src="../static/js/custom.min.js"></script> -->
-
-    <!-- Flot -->
-    <script>
-      $(document).ready(function() {
-        //define chart clolors ( you maybe add more colors if you want or flot will add it automatic )
-        var chartColours = ['#96CA59', '#3F97EB', '#72c380', '#6f7a8a', '#f7cb38', '#5a8022', '#2c7282'];
-
-        //generate random number for charts
-        randNum = function() {
-          return (Math.floor(Math.random() * (1 + 40 - 20))) + 20;
-        };
-
-        var d1 = [];
-        //var d2 = [];
-
-        //here we generate data for chart
-        for (var i = 0; i < 30; i++) {
-          d1.push([new Date(Date.today().add(i).days()).getTime(), randNum() + i + i + 10]);
-          //    d2.push([new Date(Date.today().add(i).days()).getTime(), randNum()]);
-        }
-
-        var chartMinDate = d1[0][0]; //first day
-        var chartMaxDate = d1[20][0]; //last day
-
-        var tickSize = [1, "day"];
-        var tformat = "%d/%m/%y";
-
-        //graph options
-        var options = {
-          grid: {
-            show: true,
-            aboveData: true,
-            color: "#3f3f3f",
-            labelMargin: 10,
-            axisMargin: 0,
-            borderWidth: 0,
-            borderColor: null,
-            minBorderMargin: 5,
-            clickable: true,
-            hoverable: true,
-            autoHighlight: true,
-            mouseActiveRadius: 100
-          },
-          series: {
-            lines: {
-              show: true,
-              fill: true,
-              lineWidth: 2,
-              steps: false
-            },
-            points: {
-              show: true,
-              radius: 4.5,
-              symbol: "circle",
-              lineWidth: 3.0
-            }
-          },
-          legend: {
-            position: "ne",
-            margin: [0, -25],
-            noColumns: 0,
-            labelBoxBorderColor: null,
-            labelFormatter: function(label, series) {
-              // just add some space to labes
-              return label + '&nbsp;&nbsp;';
-            },
-            width: 40,
-            height: 1
-          },
-          colors: chartColours,
-          shadowSize: 0,
-          tooltip: true, //activate tooltip
-          tooltipOpts: {
-            content: "%s: %y.0",
-            xDateFormat: "%d/%m",
-            shifts: {
-              x: -30,
-              y: -50
-            },
-            defaultTheme: false
-          },
-          yaxis: {
-            min: 0
-          },
-          xaxis: {
-            mode: "time",
-            minTickSize: tickSize,
-            timeformat: tformat,
-            min: chartMinDate,
-            max: chartMaxDate
-          }
-        };
-        var plot = $.plot($("#placeholder33x"), [{
-          label: "Email Sent",
-          data: d1,
-          lines: {
-            fillColor: "rgba(150, 202, 89, 0.12)"
-          }, //#96CA59 rgba(150, 202, 89, 0.42)
-          points: {
-            fillColor: "#fff"
-          }
-        }], options);
-      });
-    </script>
-    <!-- /Flot -->
-
-    <!-- jQuery Sparklines -->
-    <script>
-      $(document).ready(function() {
-        $(".sparkline_one").sparkline([2, 4, 3, 4, 5, 4, 5, 4, 3, 4, 5, 6, 4, 5, 6, 3, 5, 4, 5, 4, 5, 4, 3, 4, 5, 6, 7, 5, 4, 3, 5, 6], {
-          type: 'bar',
-          height: '125',
-          barWidth: 13,
-          colorMap: {
-            '7': '#a1a1a1'
-          },
-          barSpacing: 2,
-          barColor: '#26B99A'
-        });
-
-        $(".sparkline11").sparkline([2, 4, 3, 4, 5, 4, 5, 4, 3, 4, 6, 2, 4, 3, 4, 5, 4, 5, 4, 3], {
-          type: 'bar',
-          height: '40',
-          barWidth: 8,
-          colorMap: {
-            '7': '#a1a1a1'
-          },
-          barSpacing: 2,
-          barColor: '#26B99A'
-        });
-
-        $(".sparkline22").sparkline([2, 4, 3, 4, 7, 5, 4, 3, 5, 6, 2, 4, 3, 4, 5, 4, 5, 4, 3, 4, 6, 2, 4, 3, 4, 5, 4, 5, 4, 3, 4, 5, 6, 4, 5, 6, 3, 5, 4, 5, 4, 5, 4, 3, 4, 5, 6, 7, 5, 4, 3, 5, 6], {
-          type: 'line',
-          height: '40',
-          //width: '200',
-          lineColor: '#26B99A',
-          fillColor: '#ffffff',
-          lineWidth: 3,
-          spotColor: '#34495E',
-          minSpotColor: '#34495E'
-        });
-      });
-    </script>
-    <!-- /jQuery Sparklines -->
-
-    <!-- Doughnut Chart -->
-    <script>
-      $(document).ready(function() {
-        var canvasDoughnut,
-            options = {
-              legend: false,
-              responsive: false
-            };
-
-        new Chart(document.getElementById("canvas1i"), {
-          type: 'doughnut',
-          tooltipFillColor: "rgba(51, 51, 51, 0.55)",
-          data: {
-            labels: [
-              "Symbian",
-              "Blackberry",
-              "Other",
-              "Android",
-              "IOS"
-            ],
-            datasets: [{
-              data: [15, 20, 30, 10, 30],
-              backgroundColor: [
-                "#BDC3C7",
-                "#9B59B6",
-                "#E74C3C",
-                "#26B99A",
-                "#3498DB"
-              ],
-              hoverBackgroundColor: [
-                "#CFD4D8",
-                "#B370CF",
-                "#E95E4F",
-                "#36CAAB",
-                "#49A9EA"
-              ]
-
-            }]
-          },
-          options: options
-        });
-
-        new Chart(document.getElementById("canvas1i2"), {
-          type: 'doughnut',
-          tooltipFillColor: "rgba(51, 51, 51, 0.55)",
-          data: {
-            labels: [
-              "Symbian",
-              "Blackberry",
-              "Other",
-              "Android",
-              "IOS"
-            ],
-            datasets: [{
-              data: [15, 20, 30, 10, 30],
-              backgroundColor: [
-                "#BDC3C7",
-                "#9B59B6",
-                "#E74C3C",
-                "#26B99A",
-                "#3498DB"
-              ],
-              hoverBackgroundColor: [
-                "#CFD4D8",
-                "#B370CF",
-                "#E95E4F",
-                "#36CAAB",
-                "#49A9EA"
-              ]
-
-            }]
-          },
-          options: options
-        });
-
-        new Chart(document.getElementById("canvas1i3"), {
-          type: 'doughnut',
-          tooltipFillColor: "rgba(51, 51, 51, 0.55)",
-          data: {
-            labels: [
-              "Symbian",
-              "Blackberry",
-              "Other",
-              "Android",
-              "IOS"
-            ],
-            datasets: [{
-              data: [15, 20, 30, 10, 30],
-              backgroundColor: [
-                "#BDC3C7",
-                "#9B59B6",
-                "#E74C3C",
-                "#26B99A",
-                "#3498DB"
-              ],
-              hoverBackgroundColor: [
-                "#CFD4D8",
-                "#B370CF",
-                "#E95E4F",
-                "#36CAAB",
-                "#49A9EA"
-              ]
-
-            }]
-          },
-          options: options
-        });
-      });
-    </script>
-    <!-- /Doughnut Chart -->
-
-    <!-- bootstrap-daterangepicker -->
-    <script type="text/javascript">
-      $(document).ready(function() {
-
-        var cb = function(start, end, label) {
-          console.log(start.toISOString(), end.toISOString(), label);
-          $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-        };
-
-        var optionSet1 = {
-          startDate: moment().subtract(29, 'days'),
-          endDate: moment(),
-          minDate: '01/01/2012',
-          maxDate: '12/31/2015',
-          dateLimit: {
-            days: 60
-          },
-          showDropdowns: true,
-          showWeekNumbers: true,
-          timePicker: false,
-          timePickerIncrement: 1,
-          timePicker12Hour: true,
-          ranges: {
-            'Today': [moment(), moment()],
-            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'This Month': [moment().startOf('month'), moment().endOf('month')],
-            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-          },
-          opens: 'left',
-          buttonClasses: ['btn btn-default'],
-          applyClass: 'btn-small btn-primary',
-          cancelClass: 'btn-small',
-          format: 'MM/DD/YYYY',
-          separator: ' to ',
-          locale: {
-            applyLabel: 'Submit',
-            cancelLabel: 'Clear',
-            fromLabel: 'From',
-            toLabel: 'To',
-            customRangeLabel: 'Custom',
-            daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-            monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-            firstDay: 1
-          }
-        };
-        $('#reportrange span').html(moment().subtract(29, 'days').format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
-        $('#reportrange').daterangepicker(optionSet1, cb);
-        $('#reportrange').on('show.daterangepicker', function() {
-          console.log("show event fired");
-        });
-        $('#reportrange').on('hide.daterangepicker', function() {
-          console.log("hide event fired");
-        });
-        $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
-          console.log("apply event fired, start/end dates are " + picker.startDate.format('MMMM D, YYYY') + " to " + picker.endDate.format('MMMM D, YYYY'));
-        });
-        $('#reportrange').on('cancel.daterangepicker', function(ev, picker) {
-          console.log("cancel event fired");
-        });
-        $('#options1').click(function() {
-          $('#reportrange').data('daterangepicker').setOptions(optionSet1, cb);
-        });
-        $('#options2').click(function() {
-          $('#reportrange').data('daterangepicker').setOptions(optionSet2, cb);
-        });
-        $('#destroy').click(function() {
-          $('#reportrange').data('daterangepicker').remove();
-        });
-      });
-    </script>
-    <!-- /bootstrap-daterangepicker -->
-
-    <!-- <script type="text/javascript">
-    $(function() {
-        /** This code runs when everything has been loaded on the page */
-        /* Inline sparklines take their values from the contents of the tag */
-        $('.inlinesparkline').sparkline();
-
-        /* Sparklines can also take their values from the first argument
-        passed to the sparkline() function */
-        var myvalues = [10,8,5,7,4,4,1,10,8,5,7,4,4,1,10,8,5,7,4,4,1,10,8,5,7,4,4,100];
-        $('.dynamicsparkline').sparkline(myvalues);
-
-        /* The second argument gives options such as chart type */
-        $('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
-
-        /* Use 'html' instead of an array of values to pass options
-        to a sparkline with data in the tag */
-        $('.inlinebar').sparkline('html', {type: 'bar', barColor: 'red'} );
+  <script>
+    $(document).ready(function() {
+      $('#datatable').dataTable(
+        {"oLanguage": {
+          "sSearch": "Filter Table: "
+        }});
     });
-    </script> -->
+  </script>
 
-    <script>
-
+  <script>
   function up_or_down_checker(css_tag, data, json_tag)
   {
     var myDateFormat  = moment().format('MMM D YYYY, H:mm:ss');
@@ -682,6 +343,9 @@
   var ipv4_table_sparkline_data = [];
   var ipv6_table_sparkline_data = [];
   var nexthop_count_sparkline_data = [];
+  var avg_as_path_length_data = [];
+  var customer_count_data = [];
+  var customer_prefix_data = [];
 
   function update_counters()
   {
@@ -694,6 +358,9 @@
         up_or_down_checker('ipv4TableSize', data, 'ipv4_table_size');
         up_or_down_checker('ipv6TableSize', data, 'ipv6_table_size');
         up_or_down_checker('nexthopIPCount', data, 'nexthop_ip_count');
+        up_or_down_checker('avgAsPathLength', data, 'avg_as_path_length');
+        up_or_down_checker('customerCount', data, 'customer_count');
+        up_or_down_checker('customerPrefixes', data, 'customer_prefixes');
       }
 
       update_counters.count += 1;
@@ -702,10 +369,17 @@
       jQuery('#ipv4TableSize').text(data['ipv4_table_size'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#ipv6TableSize').text(data['ipv6_table_size'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#nexthopIPCount').text(data['nexthop_ip_count'].toLocaleString('en-US', {minimumFractionDigits: 0}));
+      jQuery('#avgAsPathLength').text(data['avg_as_path_length']);
+      jQuery('#customerCount').text(data['customer_count']);
+      jQuery('#customerPrefixes').text(data['customer_prefixes']);
       jQuery('.peers_count_sparkline').sparkline(peer_count_sparkline_data);
       jQuery('.ipv4_table_sparkline').sparkline(ipv4_table_sparkline_data);
       jQuery('.ipv6_table_sparkline').sparkline(ipv6_table_sparkline_data);
       jQuery('.nexthop_count_sparkline').sparkline(nexthop_count_sparkline_data);
+      jQuery('.avg_as_path_length_sparkline').sparkline(avg_as_path_length_data);
+      jQuery('.customer_count_sparkline').sparkline(customer_count_data);
+      jQuery('.customer_prefixes_sparkline').sparkline(customer_prefix_data);
+
 
       //$('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
       if (peer_count_sparkline_data.length >= 200)
@@ -714,12 +388,17 @@
         ipv4_table_sparkline_data.shift();
         ipv6_table_sparkline_data.shift();
         nexthop_count_sparkline_data.shift();
+        avg_as_path_length_data.shift();
+        customer_count_data.shift();
+        customer_prefix_data.shift();
       }
       peer_count_sparkline_data.push(data['peer_count']);
       ipv4_table_sparkline_data.push(data['ipv4_table_size']);
       ipv6_table_sparkline_data.push(data['ipv6_table_size']);
       nexthop_count_sparkline_data.push(data['nexthop_ip_count']);
-
+      avg_as_path_length_data.push(data['avg_as_path_length']);
+      customer_count_data.push(data['customer_count']);
+      customer_prefix_data.push(data['customer_prefixes']);
     });
   }
 
@@ -727,6 +406,7 @@
   setInterval(function() { update_counters() }, 5000);
 
   </script>
+
      <!-- morris.js -->
       <script>
       $(document).ready(function() {
@@ -768,82 +448,68 @@
             resize: true
           });
 
-          Morris.Bar({
-            element: 'graphx',
+          Morris.Donut({
+            element: 'graph_donut1',
             data: [
-              {x: '2015 Q1', y: 2, z: 3, a: 4},
-              {x: '2015 Q2', y: 3, z: 5, a: 6},
-              {x: '2015 Q3', y: 4, z: 3, a: 2},
-              {x: '2015 Q4', y: 2, z: 4, a: 5}
+              {%- for comm in communities -%}
+                {% if comm.community == "3701:392" %}
+                  {label: 'NWAX', value: {{ comm.count }}},
+                {% endif %}
+                {% if comm.community == "3701:394" %}
+                  {label: 'I2-CPS', value: {{ comm.count }}},
+                {% endif %}
+                {% if comm.community == "3701:395" %}
+                  {label: 'SIX', value: {{ comm.count }}},
+                {% endif %}
+                {% if comm.community == "3701:380" %}
+                  {label: 'Level3', value: {{ comm.count }}},
+                {% endif %}
+                {% if comm.community == "3701:391" %}
+                  {label: 'I2-RE', value: {{ comm.count }}},
+                {% endif %}
+              {%- endfor -%}
             ],
-            xkey: 'x',
-            ykeys: ['y', 'z', 'a'],
-            barColors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB'],
-            hideHover: 'auto',
-            labels: ['Y', 'Z', 'A'],
-            resize: true
-          }).on('click', function (i, row) {
-              console.log(i, row);
-          });
-
-          Morris.Area({
-            element: 'graph_area',
-            data: [
-              {period: '2014 Q1', iphone: 2666, ipad: null, itouch: 2647},
-              {period: '2014 Q2', iphone: 2778, ipad: 2294, itouch: 2441},
-              {period: '2014 Q3', iphone: 4912, ipad: 1969, itouch: 2501},
-              {period: '2014 Q4', iphone: 3767, ipad: 3597, itouch: 5689},
-              {period: '2015 Q1', iphone: 6810, ipad: 1914, itouch: 2293},
-              {period: '2015 Q2', iphone: 5670, ipad: 4293, itouch: 1881},
-              {period: '2015 Q3', iphone: 4820, ipad: 3795, itouch: 1588},
-              {period: '2015 Q4', iphone: 15073, ipad: 5967, itouch: 5175},
-              {period: '2016 Q1', iphone: 10687, ipad: 4460, itouch: 2028},
-              {period: '2016 Q2', iphone: 8432, ipad: 5713, itouch: 1791}
-            ],
-            xkey: 'period',
-            ykeys: ['iphone', 'ipad', 'itouch'],
-            lineColors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB'],
-            labels: ['iPhone', 'iPad', 'iPod Touch'],
-            pointSize: 2,
-            hideHover: 'auto',
+            colors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB', '#E74C3C'],
+            formatter: function (y) {
+              return y;
+            },
             resize: true
           });
 
           Morris.Donut({
-            element: 'graph_donut',
+            element: 'graph_donut2',
             data: [
-              {label: 'Jam', value: 25},
-              {label: 'Frosted', value: 40},
-              {label: 'Custard', value: 25},
-              {label: 'Sugar', value: 10}
+            {% set total_prefixes = data.ipv4_table_size + data.ipv6_table_size %}
+            {%- for comm in communities -%}
+              {% if comm.community == "3701:380" %}
+                {label: 'Non-Transit', value: {{ (((comm.count - total_prefixes) / total_prefixes) * -100)|round }}},
+                {label: 'Transit', value: {{ ((comm.count / total_prefixes) * 100)|round }}},
+              {% endif %}
+            {%- endfor -%}
             ],
-            colors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB'],
+            colors: ['#34495E', '#3498DB'],
             formatter: function (y) {
               return y + "%";
             },
             resize: true
           });
 
-          Morris.Line({
-            element: 'graph_line',
-            xkey: 'year',
-            ykeys: ['value'],
-            labels: ['Value'],
-            hideHover: 'auto',
-            lineColors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB'],
-            data: [
-              {year: '2012', value: 20},
-              {year: '2013', value: 10},
-              {year: '2014', value: 5},
-              {year: '2015', value: 5},
-              {year: '2016', value: 20}
-            ],
-            resize: true
-          });
+          // Morris.Donut({
+          //   element: 'graph_donut3',
+          //   data: [
+          //   {%- for comm in communities -%}
+          //     {% if comm.community == "3701:370" %}
+          //       {label: 'Customer', value: {{ comm.count }}}
+          //     {% endif %}
+          //   {%- endfor -%}
+          //   ],
+          //   colors: ['#34495E'],
+          //   formatter: function (y) {
+          //     return y;
+          //   },
+          //   resize: true
+          // });
 
-          $MENU_TOGGLE.on('click', function() {
-            $(window).resize();
-          });
         });
       </script>
       <!-- /morris.js -->

@@ -107,7 +107,7 @@ def avg_as_path_length():
             as_path_counter += len(set(prefix['as_path']))
         except:
             pass
-    path_length = round(as_path_counter/(all.count() * 1.0), 4)
+    path_length = round(as_path_counter/(all.count() * 1.0), 2)
     return(path_length)
 
 def top_peers(count):
@@ -126,6 +126,50 @@ def top_peers(count):
             'count': asn[1],
             'name': asn_name_query(asn[0])})
     return(json_data)
+
+def peers():
+    db = db_connect()
+    json_data = []
+    myset = set()
+
+    # customers_list = db.bgp.find({'communities': '3701:370'})
+    peers_list = db.bgp.find()
+    for prefix in peers_list:
+        myset.add(prefix['next_hop_asn'])
+    for asn in myset:
+        ipv4_count  = db.bgp.find({"next_hop_asn": asn,"ip_version": 4}).count()
+        ipv6_count = db.bgp.find({"next_hop_asn": asn,"ip_version": 6}).count()
+        if asn == None:
+            asn = 3701
+        json_data.append({
+            'asn': asn,
+            'name': asn_name_query(asn),
+            'ipv4_count': ipv4_count,
+            'ipv6_count': ipv6_count})
+    return(json_data)
+
+def customers():
+    db = db_connect()
+    json_data = []
+    myset = set()
+    prefix_counter = 0
+
+    customers_list = db.bgp.find({'communities': '3701:370'})
+    #peers_list = db.bgp.find()
+    for prefix in customers_list:
+        myset.add(prefix['next_hop_asn'])
+    for asn in myset:
+        ipv4_count  = db.bgp.find({"next_hop_asn": asn,"ip_version": 4}).count()
+        ipv6_count = db.bgp.find({"next_hop_asn": asn,"ip_version": 6}).count()
+        prefix_counter += ipv4_count + ipv6_count
+        if asn == None:
+            asn = 3701
+        json_data.append({
+            'asn': asn,
+            'name': asn_name_query(asn),
+            'ipv4_count': ipv4_count,
+            'ipv6_count': ipv6_count})
+    return(json_data, prefix_counter)
 
 def cidr_breakdown():
     db = db_connect()
@@ -180,10 +224,55 @@ def index():
 
 @app.route('/hello/', methods=['GET'])
 def hello_index():
+    comm_nums = [0,0,0,0,0]
     data = myStats.get_data()
     top_peers = data['top_n_peers']
     cidr_breakdown = data['cidr_breakdown']
+    communities = data['communities']
+    peers = data['peers']
     return render_template('hello.html', **locals())
+
+@app.route('/search/<query>', methods=['GET'])
+def search_index(query):
+    db = db_connect()
+    number = 0
+    string = None
+    prefixes = []
+    for t in query.split():
+        try:
+            number = int(t)
+        except:
+            pass
+    try:
+        query = query.lower()
+    except:
+        pass
+    network = find_network(query, netmask=32)
+    if network == None:
+        result = db.bgp.find({ "$or": [{ 'next_hop_asn': int(number)}, {'prefix': {'$regex': str(query)}}] })
+        for network in result:
+            prefixes.append({'origin_as': network['origin_as'],
+                            'nexthop': network['nexthop'],
+                            'as_path': network['as_path'],
+                            'prefix': network['prefix'],
+                            'next_hop_asn': network['next_hop_asn'],
+                            'updated': epoch_to_date(network['timestamp']),
+                            'name': asn_name_query(network['origin_as']),
+                            'med': network['med'],
+                            'local_pref': network['local_pref'],
+                            'communities': network['communities']})
+        return jsonify({'prefixes': prefixes})
+    else:
+        return jsonify({'origin_as': network['origin_as'],
+                        'nexthop': network['nexthop'],
+                        'as_path': network['as_path'],
+                        'prefix': network['prefix'],
+                        'next_hop_asn': network['next_hop_asn'],
+                        'updated': epoch_to_date(network['timestamp']),
+                        'name': asn_name_query(network['origin_as']),
+                        'med': network['med'],
+                        'local_pref': network['local_pref'],
+                        'communities': network['communities']})
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
@@ -298,6 +387,10 @@ class Stats(object):
         self.top_n_peers        = None
         self.cidr_breakdown     = None
         self.communities        = None
+        self.peers              = None
+        self.customers          = None
+        self.customer_count     = 0
+        self.customer_prefixes  = 0
         self.timestamp          = epoch_to_date(time.time())
 
     def get_json(self):
@@ -309,6 +402,10 @@ class Stats(object):
                         'top_n_peers':        self.top_n_peers,
                         'cidr_breakdown':     self.cidr_breakdown,
                         'communities':        self.communities,
+                        'peers':              self.peers,
+                        'customers':          self.customers,
+                        'customer_count':     self.customer_count,
+                        'customer_prefixes':  self.customer_prefixes,
                         'timestamp':          self.timestamp})
 
     def get_data(self):
@@ -320,6 +417,10 @@ class Stats(object):
                         'top_n_peers':        self.top_n_peers,
                         'cidr_breakdown':     self.cidr_breakdown,
                         'communities':        self.communities,
+                        'peers':              self.peers,
+                        'customers':          self.customers,
+                        'customer_count':     self.customer_count,
+                        'customer_prefixes':  self.customer_prefixes,
                         'timestamp':          self.timestamp})
 
 
@@ -329,11 +430,15 @@ class Stats(object):
         self.ipv6_table_size = prefix_count(6)
         self.nexthop_ip_counter = nexthop_ip_count()
         self.timestamp = epoch_to_date(time.time())
+        self.customer_count = len(customers()[0])
+        self.customer_prefixes = customers()[1]
 
     def update_advanced_stats(self):
         self.avg_as_path_length = avg_as_path_length()
         self.top_n_peers = top_peers(5)
         self.cidr_breakdown = cidr_breakdown()
+        self.peers = peers()
+        self.customers = customers()[0]
         self.communities = communities_count()
         self.timestamp = epoch_to_date(time.time())
 
@@ -342,7 +447,7 @@ myStats = Stats()
 threading.Thread(target=myStats.update_stats).start()
 threading.Thread(target=myStats.update_advanced_stats).start()
 sched.add_job(myStats.update_stats, 'interval', seconds=5)
-sched.add_job(myStats.update_advanced_stats, 'interval', seconds=30)
+sched.add_job(myStats.update_advanced_stats, 'interval', seconds=90)
 sched.start()
 
 if __name__ == '__main__':
