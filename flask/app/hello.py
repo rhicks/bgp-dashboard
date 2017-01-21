@@ -107,7 +107,7 @@ def avg_as_path_length():
             as_path_counter += len(set(prefix['as_path']))
         except:
             pass
-    path_length = round(as_path_counter/(all.count() * 1.0), 2)
+    path_length = round(as_path_counter/(all.count() * 1.0), 3)
     return(path_length)
 
 def top_peers(count):
@@ -152,7 +152,8 @@ def customers():
     db = db_connect()
     json_data = []
     myset = set()
-    prefix_counter = 0
+    ipv4_prefix_counter = 0
+    ipv6_prefix_counter = 0
 
     customers_list = db.bgp.find({'communities': '3701:370'})
     #peers_list = db.bgp.find()
@@ -161,7 +162,8 @@ def customers():
     for asn in myset:
         ipv4_count  = db.bgp.find({"next_hop_asn": asn,"ip_version": 4}).count()
         ipv6_count = db.bgp.find({"next_hop_asn": asn,"ip_version": 6}).count()
-        prefix_counter += ipv4_count + ipv6_count
+        ipv4_prefix_counter += ipv4_count
+        ipv6_prefix_counter += ipv6_count
         if asn == None:
             asn = 3701
         json_data.append({
@@ -169,7 +171,7 @@ def customers():
             'name': asn_name_query(asn),
             'ipv4_count': ipv4_count,
             'ipv6_count': ipv6_count})
-    return(json_data, prefix_counter)
+    return(json_data, ipv4_prefix_counter, ipv6_prefix_counter)
 
 def cidr_breakdown():
     db = db_connect()
@@ -224,7 +226,6 @@ def index():
 
 @app.route('/hello/', methods=['GET'])
 def hello_index():
-    comm_nums = [0,0,0,0,0]
     data = myStats.get_data()
     top_peers = data['top_n_peers']
     cidr_breakdown = data['cidr_breakdown']
@@ -390,7 +391,8 @@ class Stats(object):
         self.peers              = None
         self.customers          = None
         self.customer_count     = 0
-        self.customer_prefixes  = 0
+        self.customer_ipv4_prefixes  = 0
+        self.customer_ipv6_prefixes  = 0
         self.timestamp          = epoch_to_date(time.time())
 
     def get_json(self):
@@ -405,7 +407,8 @@ class Stats(object):
                         'peers':              self.peers,
                         'customers':          self.customers,
                         'customer_count':     self.customer_count,
-                        'customer_prefixes':  self.customer_prefixes,
+                        'customer_ipv4_prefixes':  self.customer_ipv4_prefixes,
+                        'customer_ipv6_prefixes':  self.customer_ipv6_prefixes,
                         'timestamp':          self.timestamp})
 
     def get_data(self):
@@ -420,7 +423,8 @@ class Stats(object):
                         'peers':              self.peers,
                         'customers':          self.customers,
                         'customer_count':     self.customer_count,
-                        'customer_prefixes':  self.customer_prefixes,
+                        'customer_ipv4_prefixes':  self.customer_ipv4_prefixes,
+                        'customer_ipv6_prefixes':  self.customer_ipv6_prefixes,
                         'timestamp':          self.timestamp})
 
 
@@ -431,7 +435,8 @@ class Stats(object):
         self.nexthop_ip_counter = nexthop_ip_count()
         self.timestamp = epoch_to_date(time.time())
         self.customer_count = len(customers()[0])
-        self.customer_prefixes = customers()[1]
+        self.customer_ipv4_prefixes = customers()[1]
+        self.customer_ipv6_prefixes = customers()[2]
 
     def update_advanced_stats(self):
         self.avg_as_path_length = avg_as_path_length()

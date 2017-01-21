@@ -35,6 +35,26 @@
                 <h1 style="color: #34495e;">ASN3701</h1>
                 <h2><i>NERONET - Network for Education and Research in Oregon (NERO)</i></h2>
               </div>
+              <div class="title_right">
+                <div class="col-md-2 col-sm-2 col-xs-12 form-group pull-right top_search">
+                  <form onsubmit="location.href='/bgp/api/v1.0/asn/' + document.getElementById('asnInput').value; return false;" class="input-group">
+                    <input type="text" id="asnInput" class="form-control" placeholder="ASN Search...">
+                    <span class="input-group-btn">
+                      <button class="btn btn-default" type="button">Go!</button>
+                    </span>
+                  </form>
+                </div>
+              </div>
+              <div class="title_right">
+                <div class="col-md-2 col-sm-2 col-xs-12 form-group pull-right top_search">
+                  <form onsubmit="location.href='/bgp/api/v1.0/ip/' + document.getElementById('ipInput').value.split('/')[0]; return false;" class="input-group">
+                    <input type="text" id="ipInput" class="form-control" placeholder="IP Search...">
+                    <span class="input-group-btn">
+                      <button class="btn btn-default" type="button">Go!</button>
+                    </span>
+                  </form>
+                </div>
+              </div>
             </nav>
           </div>
         </div>
@@ -114,6 +134,32 @@
               </div>
               <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats">
+                  <div class="icon"><i id="customerIPv4PrefixesIcon"></i></div>
+                  <div class="count" id="customerIPv4Prefixes">0</div>
+                  <h3>Customer IPv4 Prefixes</h3>
+                  <div>
+                    <p class="count_bottom pull-right" id="customerIPv4PrefixesChangeTime"></p>
+                    <p>Customer & Orginated IPv4 Prefix Count</p>
+                  </div>
+                  <div class="clearfix"></div>
+                  <p class="customer_ipv4_prefixes_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
+                </div>
+              </div>
+              <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                <div class="tile-stats">
+                  <div class="icon"><i id="customerIPv6PrefixesIcon"></i></div>
+                  <div class="count" id="customerIPv6Prefixes">0</div>
+                  <h3>Customer IPv6 Prefixes</h3>
+                  <div>
+                    <p class="count_bottom pull-right" id="customerIPv6PrefixesChangeTime"></p>
+                    <p>Customer & Orginated IPv6 Prefix Count</p>
+                  </div>
+                  <div class="clearfix"></div>
+                  <p class="customer_ipv6_prefixes_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
+                </div>
+              </div>
+              <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                <div class="tile-stats">
                   <div class="icon"><i id="customerCountIcon"></i></div>
                   <div class="count" id="customerCount">0</div>
                   <h3>BGP Customers</h3>
@@ -123,19 +169,6 @@
                   </div>
                   <div class="clearfix"></div>
                   <p class="customer_count_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
-                </div>
-              </div>
-              <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                <div class="tile-stats">
-                  <div class="icon"><i id="customerPrefixesIcon"></i></div>
-                  <div class="count" id="customerPrefixes">0</div>
-                  <h3>Customer Prefixes</h3>
-                  <div>
-                    <p class="count_bottom pull-right" id="customerPrefixesChangeTime"></p>
-                    <p>Customer & Orginated Prefix Count</p>
-                  </div>
-                  <div class="clearfix"></div>
-                  <p class="customer_prefixes_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
                 </div>
               </div>
             </div>
@@ -345,7 +378,8 @@
   var nexthop_count_sparkline_data = [];
   var avg_as_path_length_data = [];
   var customer_count_data = [];
-  var customer_prefix_data = [];
+  var customer_ipv4_prefix_data = [];
+  var customer_ipv6_prefix_data = [];
 
   function update_counters()
   {
@@ -360,7 +394,8 @@
         up_or_down_checker('nexthopIPCount', data, 'nexthop_ip_count');
         up_or_down_checker('avgAsPathLength', data, 'avg_as_path_length');
         up_or_down_checker('customerCount', data, 'customer_count');
-        up_or_down_checker('customerPrefixes', data, 'customer_prefixes');
+        up_or_down_checker('customerIPv4Prefixes', data, 'customer_ipv4_prefixes');
+        up_or_down_checker('customerIPv6Prefixes', data, 'customer_ipv6_prefixes');
       }
 
       update_counters.count += 1;
@@ -371,14 +406,16 @@
       jQuery('#nexthopIPCount').text(data['nexthop_ip_count'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#avgAsPathLength').text(data['avg_as_path_length']);
       jQuery('#customerCount').text(data['customer_count']);
-      jQuery('#customerPrefixes').text(data['customer_prefixes']);
+      jQuery('#customerIPv4Prefixes').text(data['customer_ipv4_prefixes']);
+      jQuery('#customerIPv6Prefixes').text(data['customer_ipv6_prefixes']);
       jQuery('.peers_count_sparkline').sparkline(peer_count_sparkline_data);
       jQuery('.ipv4_table_sparkline').sparkline(ipv4_table_sparkline_data);
       jQuery('.ipv6_table_sparkline').sparkline(ipv6_table_sparkline_data);
       jQuery('.nexthop_count_sparkline').sparkline(nexthop_count_sparkline_data);
       jQuery('.avg_as_path_length_sparkline').sparkline(avg_as_path_length_data);
       jQuery('.customer_count_sparkline').sparkline(customer_count_data);
-      jQuery('.customer_prefixes_sparkline').sparkline(customer_prefix_data);
+      jQuery('.customer_ipv4_prefixes_sparkline').sparkline(customer_ipv4_prefix_data);
+      jQuery('.customer_ipv6_prefixes_sparkline').sparkline(customer_ipv6_prefix_data);
 
 
       //$('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
@@ -390,7 +427,8 @@
         nexthop_count_sparkline_data.shift();
         avg_as_path_length_data.shift();
         customer_count_data.shift();
-        customer_prefix_data.shift();
+        customer_ipv4_prefix_data.shift();
+        customer_ipv6_prefix_data.shift();
       }
       peer_count_sparkline_data.push(data['peer_count']);
       ipv4_table_sparkline_data.push(data['ipv4_table_size']);
@@ -398,7 +436,8 @@
       nexthop_count_sparkline_data.push(data['nexthop_ip_count']);
       avg_as_path_length_data.push(data['avg_as_path_length']);
       customer_count_data.push(data['customer_count']);
-      customer_prefix_data.push(data['customer_prefixes']);
+      customer_ipv4_prefix_data.push(data['customer_ipv4_prefixes']);
+      customer_ipv6_prefix_data.push(data['customer_ipv6_prefixes']);
     });
   }
 
