@@ -40,7 +40,7 @@
                   <form onsubmit="location.href='/bgp/api/v1.0/asn/' + document.getElementById('asnInput').value; return false;" class="input-group">
                     <input type="text" id="asnInput" class="form-control" placeholder="ASN Search...">
                     <span class="input-group-btn">
-                      <button class="btn btn-default" type="button">Go!</button>
+                      <button class="btn btn-default" type="submit">Go!</button>
                     </span>
                   </form>
                 </div>
@@ -50,7 +50,7 @@
                   <form onsubmit="location.href='/bgp/api/v1.0/ip/' + document.getElementById('ipInput').value.split('/')[0]; return false;" class="input-group">
                     <input type="text" id="ipInput" class="form-control" placeholder="IP Search...">
                     <span class="input-group-btn">
-                      <button class="btn btn-default" type="button">Go!</button>
+                      <button class="btn btn-default" type="submit">Go!</button>
                     </span>
                   </form>
                 </div>
@@ -126,7 +126,7 @@
                   <h3>Average AS Path Length</h3>
                   <div>
                     <p class="count_bottom pull-right" id="avgAsPathLengthChangeTime"></p>
-                    <p>Shorter is better</p>
+                    <p>Hops between Source and Destination ASNs</p>
                   </div>
                   <div class="clearfix"></div>
                   <p class="avg_as_path_length_sparkline pull-right" style="margin-right: 5px; margin-left: 5px;">Loading..</p>
