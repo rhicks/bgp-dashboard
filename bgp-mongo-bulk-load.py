@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 
 import json
-import pymongo
 from pymongo import MongoClient
-from datetime import datetime
 import fileinput
 import ipaddress
 
@@ -14,6 +12,7 @@ db.bgp.create_index('next_hop_asn')
 db.bgp.create_index('prefix')
 db.bgp.create_index('origin_as')
 
+
 def build_object(prefix, v):
     nexthop = None
     as_path = None
@@ -22,8 +21,7 @@ def build_object(prefix, v):
     med = None
     local_pref = None
     withdrawal = None
-    ip_version = ipaddress.ip_address(prefix.split('/',1)[0]).version
-    age = None
+    ip_version = ipaddress.ip_address(prefix.split('/', 1)[0]).version
     communities = []
     for attribute in v[0]['attrs']:
         if attribute['type'] == 3:
@@ -58,7 +56,7 @@ def build_object(prefix, v):
                 communities = []
                 for number in attribute['communities']:
                     communities.append(str(int(bin(number)[:-16], 2)) + ":" +
-                                        str(int(bin(number)[-16:], 2)))
+                                       str(int(bin(number)[-16:], 2)))
             except:
                 communities = []
         elif attribute['type'] == 5:
@@ -75,24 +73,23 @@ def build_object(prefix, v):
     else:
         timestamp = None
 
-    data = {    'prefix': prefix,
-                'nexthop': nexthop,
-                'as_path': as_path,
-                'next_hop_asn': next_hop_asn,
-                'origin_as': origin_as,
-                'med': med,
-                'local_pref': local_pref,
-                'withdrawal': withdrawal,
-                'ip_version': ip_version,
-                'communities': communities,
-                'timestamp': timestamp
-            }
+    data = {'prefix': prefix,
+            'nexthop': nexthop,
+            'as_path': as_path,
+            'next_hop_asn': next_hop_asn,
+            'origin_as': origin_as,
+            'med': med,
+            'local_pref': local_pref,
+            'withdrawal': withdrawal,
+            'ip_version': ip_version,
+            'communities': communities,
+            'timestamp': timestamp}
 
     return(data)
 
+
 def mongo_update(data):
-    if data['withdrawal'] == True:
-        removed = db.bgp.delete_one({"prefix": data['prefix']})
+    if data['withdrawal'] is True:
         print('Del: %s' % (data['prefix']))
     else:
         result = db.bgp.update({"prefix": data['prefix']}, data, upsert=True)
