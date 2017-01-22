@@ -8,20 +8,26 @@ from collections import Counter
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 
+_DEFAULT_ASN = 3701
+
 app = Flask(__name__)
 
 
 def db_connect():
+    """Return a connection to the Mongo Database."""
     client = MongoClient(host='mongo')
     return(client.bgp)
 
 
 def take(n, iterable):
-    'Return first n items of the iterable as a list'
+    """Return first n items of the iterable as a list."""
     return list(islice(iterable, n))
 
 
 def find_network(ip, netmask):
+    """Given an IPv4 or IPv6 address, recursively search for and return the most
+       specific prefix in the MongoDB collection.
+    """
     try:
         if ipaddress.ip_address(ip).version == 4:
             db = db_connect()
@@ -52,13 +58,14 @@ def find_network(ip, netmask):
 
 
 def asn_name_query(asn):
+    """Given an *asn*, return the name."""
     if asn is None:
-        asn = 3701
+        asn = _DEFAULT_ASN
     if 64512 <= asn <= 65534:
         return('RFC6996 - Private Use ASN')
     else:
         try:
-            query = 'as' + str(asn) + '.asn.cymru.com'
+            query = 'as{number}.asn.cymru.com'.format(number=str(asn))
             resolver = dns.resolver.Resolver()
             answers = resolver.query(query, 'TXT')
             for rdata in answers:
@@ -68,15 +75,16 @@ def asn_name_query(asn):
 
 
 def is_peer(asn):
+    """Is *asn* in the list of directy connected ASNs."""
     db = db_connect()
-    peers = db.bgp.distinct('next_hop_asn')
-    if asn in peers:
+    if asn in db.bgp.distinct('next_hop_asn'):
         return True
     else:
         return False
 
 
 def reverse_dns_query(ip):
+    """Given an *ip*, return the reverse dns."""
     try:
         addr = dns.reversename.from_address(str(ip))
         resolver = dns.resolver.Resolver()
@@ -86,42 +94,45 @@ def reverse_dns_query(ip):
 
 
 def peer_count():
+    """Return the number of directly connected ASNs."""
     db = db_connect()
-    peer_asns = db.bgp.distinct('next_hop_asn')
-    return(len(peer_asns))
+    return(len(db.bgp.distinct('next_hop_asn')))
 
 
 def prefix_count(version):
+    """Given the IP version, return the number of prefixes in the database."""
     db = db_connect()
-    result = db.bgp.find({'ip_version': version})
-    return(result.count())
+    return(db.bgp.find({'ip_version': version}).count())
 
 
 def nexthop_ip_count():
+    """Return the number of unique next hop IPv4 and IPv6 addresses."""
     db = db_connect()
-    nexthop_ip_count = db.bgp.distinct('nexthop')
-    return(len(nexthop_ip_count))
+    return(len(db.bgp.distinct('nexthop')))
 
 
 def epoch_to_date(epoch):
+    """Given an *epoch* time stamp, return a human readable equivalent."""
     return(time.strftime('%Y-%m-%d %H:%M:%S %Z', time.gmtime(epoch)))
 
 
 def avg_as_path_length():
+    """Return the computed average *as_path* length of all prefixes in the
+    database.  Using a python *set* to remove any AS prepending."""
     db = db_connect()
     as_path_counter = 0
-
-    all = db.bgp.find()
-    for prefix in all:
+    all_prefixes = db.bgp.find()
+    for prefix in all_prefixes:
         try:
             as_path_counter += len(set(prefix['as_path']))
         except:
             pass
-    path_length = round(as_path_counter/(all.count() * 1.0), 3)
-    return(path_length)
+    return(round(as_path_counter/(all_prefixes.count() * 1.0), 3))
 
 
 def top_peers(count):
+    """Return a sorted list of top peer dictionaries ordered by prefix count.
+    Limit to *count*."""
     db = db_connect()
     top_peers_dict = {}
     peers = db.bgp.distinct('next_hop_asn')
@@ -142,6 +153,7 @@ def top_peers(count):
 
 
 def peers():
+    """Return a list of peer dictionaries."""
     db = db_connect()
     json_data = []
     myset = set()
@@ -154,7 +166,7 @@ def peers():
         ipv4_count = db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count()
         ipv6_count = db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()
         if asn is None:
-            asn = 3701
+            asn = _DEFAULT_ASN
         json_data.append({
             'asn': asn,
             'name': asn_name_query(asn),
@@ -179,7 +191,7 @@ def customers():
         ipv4_prefix_counter += ipv4_count
         ipv6_prefix_counter += ipv6_count
         if asn is None:
-            asn = 3701
+            asn = _DEFAULT_ASN
         json_data.append({
             'asn': asn,
             'name': asn_name_query(asn),
@@ -346,7 +358,7 @@ def get_peers():
     for asn in peer_asns:
         next_hop_ips = db.bgp.find({'next_hop_asn': asn}).distinct('nexthop')
         if asn is None:
-            asn = 3701
+            asn = _DEFAULT_ASN
         isp_origin_as = db.bgp.find({'origin_as': asn})
         isp_nexthop_as = db.bgp.find({'next_hop_asn': asn})
         if isp_nexthop_as.count() > isp_origin_as.count():
