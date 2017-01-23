@@ -135,22 +135,15 @@ def top_peers(count):
     """Return a sorted list of top peer dictionaries ordered by prefix count.
     Limit to *count*."""
     db = db_connect()
-    top_peers_dict = {}
-    peers = db.bgp.distinct('next_hop_asn')
-    json_data = []
-
-    for peer in peers:
-        prefixes = db.bgp.find({'next_hop_asn': peer})
-        top_peers_dict[peer] = prefixes.count()
-    top_n = take(count, sorted(top_peers_dict.items(),
-                               key=lambda x: x[1],
-                               reverse=True))
-    for asn in top_n:
-        json_data.append({
-            'asn': asn[0],
-            'count': asn[1],
-            'name': asn_name_query(asn[0])})
-    return(json_data)
+    peers = {peer: db.bgp.find({'next_hop_asn': peer}).count()
+             for peer in db.bgp.distinct('next_hop_asn')}
+    return([{'asn': asn[0],
+             'count': asn[1],
+             'name': asn_name_query(asn[0])
+             }
+            for asn in take(count, sorted(peers.items(),
+                                          key=lambda x: x[1],
+                                          reverse=True))])
 
 
 def peers():
