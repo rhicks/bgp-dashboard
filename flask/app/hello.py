@@ -9,6 +9,7 @@ import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 
 _DEFAULT_ASN = 3701
+_CUSTOMER_BGP_COMMUNITY = '3701:370'
 
 app = Flask(__name__)
 
@@ -329,7 +330,10 @@ def get_asn_prefixes(asn):
     db = db_connect()
     prefixes = []
 
-    routes = db.bgp.find({'origin_as': asn})
+    if asn == _DEFAULT_ASN:
+        routes = db.bgp.find({'origin_as': None})
+    else:
+        routes = db.bgp.find({'origin_as': asn})
 
     for prefix in routes:
         prefixes.append({'prefix': prefix['prefix'],
@@ -377,11 +381,6 @@ def get_peers():
 
 @app.route('/bgp/api/v1.0/stats', methods=['GET'])
 def get_stats():
-    return myStats.get_json()
-
-
-@app.route('/bgp/api/v1.0/stats/advanced', methods=['GET'])
-def advanced_stats():
     return myStats.get_json()
 
 
