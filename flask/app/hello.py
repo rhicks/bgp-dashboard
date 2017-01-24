@@ -30,28 +30,15 @@ def find_network(ip, netmask):
        specific prefix in the MongoDB collection.
     """
     try:
-        if ipaddress.ip_address(ip).version == 4:
-            db = db_connect()
-            network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
-            result = db.bgp.find_one({'prefix': network})
-            if result is not None:
-                return(result)
-            elif netmask == 0:
-                return(None)
-            else:
-                return(find_network(ip, netmask-1))
-        elif ipaddress.ip_address(ip).version == 6:
-            db = db_connect()
-            network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask + 95))
-            result = db.bgp.find_one({'prefix': network})
-            if result is not None:
-                return(result)
-            elif netmask == 0:
-                return(None)
-            else:
-                return(find_network(ip, netmask-1))
-        else:
+        db = db_connect()
+        network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
+        result = db.bgp.find_one({'prefix': network})
+        if result is not None:
+            return(result)
+        elif netmask == 0:
             return(None)
+        else:
+            return(find_network(ip, netmask-1))
     except:
         return(None)
 
@@ -60,7 +47,9 @@ def asn_name_query(asn):
     """Given an *asn*, return the name."""
     if asn is None:
         asn = _DEFAULT_ASN
-    if 64512 <= asn <= 65534:
+    if 64496 <= asn <= 64511:
+        return('RFC5398 - Private Use ASN')
+    if 64512 <= asn <= 65535 or 4200000000 <= asn <= 4294967295:
         return('RFC6996 - Private Use ASN')
     else:
         try:
@@ -264,7 +253,12 @@ def search_index(query):
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
-    network = find_network(ip, netmask=32)
+    if ipaddress.ip_address(ip).version == 4:
+        network = find_network(ip, netmask=32)
+    elif ipaddress.ip_address(ip).version == 6:
+        network = find_network(ip, netmask=128)
+    else:
+        network = None
     if network is None:
         return jsonify({})
     else:
