@@ -139,8 +139,7 @@ def top_peers(count):
              for peer in db.bgp.distinct('next_hop_asn')}
     return([{'asn': asn[0],
              'count': asn[1],
-             'name': asn_name_query(asn[0])
-             }
+             'name': asn_name_query(asn[0])}
             for asn in take(count, sorted(peers.items(),
                                           key=lambda x: x[1],
                                           reverse=True))])
