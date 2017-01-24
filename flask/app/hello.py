@@ -115,7 +115,7 @@ def epoch_to_date(epoch):
     return(time.strftime('%Y-%m-%d %H:%M:%S %Z', time.gmtime(epoch)))
 
 
-def avg_as_path_length():
+def avg_as_path_length(decimal_point_accuracy=3):
     """Return the computed average *as_path* length of all prefixes in the
     database.  Using a python *set* to remove any AS prepending."""
     db = db_connect()
@@ -123,10 +123,10 @@ def avg_as_path_length():
     all_prefixes = db.bgp.find()
     for prefix in all_prefixes:
         try:
-            as_path_counter += len(set(prefix['as_path']))
+            as_path_counter += len(set(prefix['as_path']))  # sets remove duplicate ASNs
         except:
             pass
-    return(round(as_path_counter/(all_prefixes.count() * 1.0), 3))
+    return(round(as_path_counter/(all_prefixes.count() * 1.0), decimal_point_accuracy))
 
 
 def top_peers(count):
@@ -149,7 +149,7 @@ def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY)
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
     else:
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find({'communities': community})}
-    return([{'asn': asn if asn is not None else _DEFAULT_ASN,
+    return([{'asn': asn if asn is not None else _DEFAULT_ASN,  # Prefixes originated by the source ASN will not have an ASN
              'name': asn_name_query(asn),
              'ipv4_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count(),
              'ipv6_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()}
