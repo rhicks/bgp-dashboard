@@ -491,24 +491,12 @@
             element: 'graph_donut1',
             data: [
               {%- for comm in communities -%}
-                {% if comm.community == "3701:392" %}
-                  {label: 'NWAX', value: {{ comm.count }}},
-                {% endif %}
-                {% if comm.community == "3701:394" %}
-                  {label: 'I2-CPS', value: {{ comm.count }}},
-                {% endif %}
-                {% if comm.community == "3701:395" %}
-                  {label: 'SIX', value: {{ comm.count }}},
-                {% endif %}
-                {% if comm.community == "3701:380" %}
-                  {label: 'Level3', value: {{ comm.count }}},
-                {% endif %}
-                {% if comm.community == "3701:391" %}
-                  {label: 'I2-RE', value: {{ comm.count }}},
+                {% if comm.community[:-1] == ("3701:39") %}
+                  {label: "{{ comm.name }}", value: {{ comm.count }}},
                 {% endif %}
               {%- endfor -%}
             ],
-            colors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB', '#E74C3C'],
+            colors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB', '#E74C3C', '#E59443'],
             formatter: function (y) {
               return y;
             },
