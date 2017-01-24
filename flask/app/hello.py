@@ -142,6 +142,8 @@ def top_peers(count):
 
 
 def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY):
+    """Return a list of prefix dictionaries.  Specify which type of prefix to
+    return by setting *customers* or *peers* to True."""
     db = db_connect()
     if peers:
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
