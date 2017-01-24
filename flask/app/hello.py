@@ -42,7 +42,7 @@ def find_network(ip, netmask):
                 return(find_network(ip, netmask-1))
         elif ipaddress.ip_address(ip).version == 6:
             db = db_connect()
-            network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask + 32))
+            network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask + 95))
             result = db.bgp.find_one({'prefix': network})
             if result is not None:
                 return(result)
@@ -141,40 +141,17 @@ def top_peers(count):
             for asn in take(count, sorted(peers.items(), key=lambda x: x[1], reverse=True))])
 
 
-def peers():
-    """Return a list of peer dictionaries."""
+def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY):
     db = db_connect()
-    peers = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
+    if peers:
+        query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
+    else:
+        query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find({'communities': community})}
     return([{'asn': asn if asn is not None else _DEFAULT_ASN,
              'name': asn_name_query(asn),
              'ipv4_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count(),
              'ipv6_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()}
-            for asn in peers])
-
-
-def customers():
-    db = db_connect()
-    json_data = []
-    myset = set()
-    ipv4_prefix_counter = 0
-    ipv6_prefix_counter = 0
-
-    customers_list = db.bgp.find({'communities': '3701:370'})
-    for prefix in customers_list:
-        myset.add(prefix['next_hop_asn'])
-    for asn in myset:
-        ipv4_count = db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count()
-        ipv6_count = db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()
-        ipv4_prefix_counter += ipv4_count
-        ipv6_prefix_counter += ipv6_count
-        if asn is None:
-            asn = _DEFAULT_ASN
-        json_data.append({
-            'asn': asn,
-            'name': asn_name_query(asn),
-            'ipv4_count': ipv4_count,
-            'ipv6_count': ipv6_count})
-    return(json_data, ipv4_prefix_counter, ipv6_prefix_counter)
+            for asn in query_results])
 
 
 def cidr_breakdown():
@@ -436,16 +413,20 @@ class Stats(object):
         self.ipv6_table_size = prefix_count(6)
         self.nexthop_ip_counter = nexthop_ip_count()
         self.timestamp = epoch_to_date(time.time())
-        self.customer_count = len(customers()[0])
-        self.customer_ipv4_prefixes = customers()[1]
-        self.customer_ipv6_prefixes = customers()[2]
+        customers = get_list_of(customers=True)
+        self.customer_count = len(customers)
+        self.customer_ipv4_prefixes = 0
+        self.customer_ipv6_prefixes = 0
+        for customer in customers:
+            self.customer_ipv4_prefixes += customer['ipv4_count']
+            self.customer_ipv6_prefixes += customer['ipv6_count']
 
     def update_advanced_stats(self):
         self.avg_as_path_length = avg_as_path_length()
         self.top_n_peers = top_peers(5)
         self.cidr_breakdown = cidr_breakdown()
-        self.peers = peers()
-        self.customers = customers()[0]
+        self.peers = get_list_of(peers=True)
+        self.customers = get_list_of(customers=True)
         self.communities = communities_count()
         self.timestamp = epoch_to_date(time.time())
 
