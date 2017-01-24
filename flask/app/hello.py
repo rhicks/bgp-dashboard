@@ -10,6 +10,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 _DEFAULT_ASN = 3701
 _CUSTOMER_BGP_COMMUNITY = '3701:370'
+_TRANSIT_BGP_COMMUNITY = '3701:380'
 _BGP_COMMUNITY_MAP = {
       '3701:111': 'Level3-Prepend-1',
       '3701:112': 'Level3-Prepend-2',
@@ -199,13 +200,15 @@ def communities_count():
             for community in db.bgp.distinct('communities')])
 
 
-@app.route('/hello/', methods=['GET'])
+@app.route('/', methods=['GET'])
 def hello_index():
     data = myStats.get_data()
     top_peers = data['top_n_peers']
     cidr_breakdown = data['cidr_breakdown']
     communities = data['communities']
     peers = data['peers']
+    source_asn = _DEFAULT_ASN
+    source_asn_name = asn_name_query(_DEFAULT_ASN)
     return render_template('hello.html', **locals())
 
 
