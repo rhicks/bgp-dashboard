@@ -97,6 +97,13 @@ def is_peer(asn):
         return False
 
 
+def is_transit(prefix, transit_bgp_community=_TRANSIT_BGP_COMMUNITY):
+    if _TRANSIT_BGP_COMMUNITY in prefix['communities']:
+        return True
+    else:
+        return False
+
+
 def reverse_dns_query(ip):
     """Given an *ip*, return the reverse dns."""
     try:
@@ -212,49 +219,6 @@ def hello_index():
     return render_template('hello.html', **locals())
 
 
-@app.route('/search/<query>', methods=['GET'])
-def search_index(query):
-    db = db_connect()
-    number = 0
-    prefixes = []
-    for t in query.split():
-        try:
-            number = int(t)
-        except:
-            pass
-    try:
-        query = query.lower()
-    except:
-        pass
-    network = find_network(query, netmask=32)
-    if network is None:
-        result = db.bgp.find({'$or': [{'next_hop_asn': int(number)},
-                                      {'prefix': {'$regex': str(query)}}]})
-        for network in result:
-            prefixes.append({'origin_as': network['origin_as'],
-                             'nexthop': network['nexthop'],
-                             'as_path': network['as_path'],
-                             'prefix': network['prefix'],
-                             'next_hop_asn': network['next_hop_asn'],
-                             'updated': epoch_to_date(network['timestamp']),
-                             'name': asn_name_query(network['origin_as']),
-                             'med': network['med'],
-                             'local_pref': network['local_pref'],
-                             'communities': network['communities']})
-        return jsonify({'prefixes': prefixes})
-    else:
-        return jsonify({'origin_as': network['origin_as'],
-                        'nexthop': network['nexthop'],
-                        'as_path': network['as_path'],
-                        'prefix': network['prefix'],
-                        'next_hop_asn': network['next_hop_asn'],
-                        'updated': epoch_to_date(network['timestamp']),
-                        'name': asn_name_query(network['origin_as']),
-                        'med': network['med'],
-                        'local_pref': network['local_pref'],
-                        'communities': network['communities']})
-
-
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
     if ipaddress.ip_address(ip).version == 4:
@@ -275,6 +239,7 @@ def get_ip(ip):
                         'name': asn_name_query(network['origin_as']),
                         'med': network['med'],
                         'local_pref': network['local_pref'],
+                        'is_transit': is_transit(network),
                         'communities': network['communities']})
 
 
@@ -296,6 +261,7 @@ def get_asn_prefixes(asn):
                          'nexthop_asn': prefix['next_hop_asn'],
                          'as_path': prefix['as_path'],
                          'updated': epoch_to_date(prefix['timestamp']),
+                         'is_transit': is_transit(prefix),
                          'name': asn_name_query(asn)})
 
     return jsonify({'asn': asn,
