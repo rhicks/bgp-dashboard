@@ -271,33 +271,6 @@ def get_asn_prefixes(asn):
                     'origin_prefix_list': prefixes})
 
 
-@app.route('/bgp/api/v1.0/peers', methods=['GET'])
-def get_peers():
-    db = db_connect()
-    peers = []
-
-    peer_asns = db.bgp.distinct('next_hop_asn')
-
-    for asn in peer_asns:
-        next_hop_ips = db.bgp.find({'next_hop_asn': asn}).distinct('nexthop')
-        if asn is None:
-            asn = _DEFAULT_ASN
-        isp_origin_as = db.bgp.find({'origin_as': asn})
-        isp_nexthop_as = db.bgp.find({'next_hop_asn': asn})
-        if isp_nexthop_as.count() > isp_origin_as.count():
-            transit_provider = True
-        else:
-            transit_provider = False
-        peers.append({'asn': asn,
-                      'name': asn_name_query(asn),
-                      'next_hop_ips': next_hop_ips,
-                      'origin_prefix_count': isp_origin_as.count(),
-                      'nexthop_prefix_count': isp_nexthop_as.count(),
-                      'transit_provider': transit_provider})
-
-    return jsonify({'peers': peers})
-
-
 @app.route('/bgp/api/v1.0/stats', methods=['GET'])
 def get_stats():
     return myStats.get_json()
