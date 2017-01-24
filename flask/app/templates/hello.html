@@ -32,8 +32,8 @@
           <div class="nav_menu">
             <nav>
               <div class="navbar-left" style="padding-left: 30px;">
-                <h1 style="color: #34495e;">ASN3701</h1>
-                <h2><i>NERONET - Network for Education and Research in Oregon (NERO)</i></h2>
+                <h1 style="color: #34495e;">ASN{{source_asn}}</h1>
+                <h2><i>{{source_asn_name}}</i></h2>
               </div>
               <div class="title_right">
                 <div class="col-md-2 col-sm-2 col-xs-12 form-group pull-right top_search">
@@ -257,7 +257,7 @@
                             <h4 style="margin:0">Peering Prefix Count</h4>
                           </div>
                           <div id="graph_donut2" class="col-md-4" style="width:50%; height:180px;">
-                            <h4 style="margin:0">Transt vs. Non-Transit</h4>
+                            <h4 style="margin:0">Transit vs. Peering</h4>
                           </div>
                         </div>
                       </div>
@@ -305,7 +305,7 @@
         <!-- footer content -->
         <footer>
           <div class="pull-right">
-            Gentelella - Bootstrap Admin Template by <a href="https://colorlib.com">Colorlib</a>
+            <a href="https://github.com/puikinsh/gentelella">Gentelella</a> - Bootstrap Admin Template by <a href="https://colorlib.com">Colorlib</a>
           </div>
           <div class="clearfix"></div>
         </footer>
@@ -496,7 +496,7 @@
                 {% endif %}
               {%- endfor -%}
             ],
-            colors: ['#26B99A', '#34495E', '#ACADAC', '#3498DB', '#E74C3C', '#E59443'],
+            colors: ['#26B99A', '#34495E', '#E59443', '#3498DB', '#E74C3C', '#ACADAC'],
             formatter: function (y) {
               return y;
             },
@@ -509,7 +509,7 @@
             {% set total_prefixes = data.ipv4_table_size + data.ipv6_table_size %}
             {%- for comm in communities -%}
               {% if comm.community == "3701:380" %}
-                {label: 'Non-Transit', value: {{ (((comm.count - total_prefixes) / total_prefixes) * -100)|round }}},
+                {label: 'Peering', value: {{ (((comm.count - total_prefixes) / total_prefixes) * -100)|round }}},
                 {label: 'Transit', value: {{ ((comm.count / total_prefixes) * 100)|round }}},
               {% endif %}
             {%- endfor -%}
