@@ -32,8 +32,7 @@ def find_network(ip, netmask):
     try:
         if ipaddress.ip_address(ip).version == 4:
             db = db_connect()
-            network = str(ipaddress.ip_network(
-                ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
+            network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
             result = db.bgp.find_one({'prefix': network})
             if result is not None:
                 return(result)
@@ -43,8 +42,7 @@ def find_network(ip, netmask):
                 return(find_network(ip, netmask-1))
         elif ipaddress.ip_address(ip).version == 6:
             db = db_connect()
-            network = str(ipaddress.ip_network(
-                ipaddress.ip_address(ip)).supernet(new_prefix=netmask + 32))
+            network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask + 32))
             result = db.bgp.find_one({'prefix': network})
             if result is not None:
                 return(result)
@@ -140,32 +138,18 @@ def top_peers(count):
     return([{'asn': asn[0],
              'count': asn[1],
              'name': asn_name_query(asn[0])}
-            for asn in take(count, sorted(peers.items(),
-                                          key=lambda x: x[1],
-                                          reverse=True))])
+            for asn in take(count, sorted(peers.items(), key=lambda x: x[1], reverse=True))])
 
 
 def peers():
     """Return a list of peer dictionaries."""
     db = db_connect()
-    json_data = []
-    myset = set()
-
-    # customers_list = db.bgp.find({'communities': '3701:370'})
-    peers_list = db.bgp.find()
-    for prefix in peers_list:
-        myset.add(prefix['next_hop_asn'])
-    for asn in myset:
-        ipv4_count = db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count()
-        ipv6_count = db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()
-        if asn is None:
-            asn = _DEFAULT_ASN
-        json_data.append({
-            'asn': asn,
-            'name': asn_name_query(asn),
-            'ipv4_count': ipv4_count,
-            'ipv6_count': ipv6_count})
-    return(json_data)
+    peers = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
+    return([{'asn': asn if asn is not None else _DEFAULT_ASN,
+             'name': asn_name_query(asn),
+             'ipv4_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count(),
+             'ipv6_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()}
+            for asn in peers])
 
 
 def customers():
@@ -404,11 +388,11 @@ class Stats(object):
         self.ipv6_table_size = 0
         self.nexthop_ip_counter = 0
         self.avg_as_path_length = 0
-        self.top_n_peers = None
-        self.cidr_breakdown = None
-        self.communities = None
-        self.peers = None
-        self.customers = None
+        self.top_n_peers = []
+        self.cidr_breakdown = []
+        self.communities = []
+        self.peers = []
+        self.customers = []
         self.customer_count = 0
         self.customer_ipv4_prefixes = 0
         self.customer_ipv6_prefixes = 0
