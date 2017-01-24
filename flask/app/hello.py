@@ -199,12 +199,6 @@ def communities_count():
             for community in db.bgp.distinct('communities')])
 
 
-@app.route('/', methods=['GET'])
-def index():
-    # num_peers = peer_count()
-    return render_template('home.html', **locals())
-
-
 @app.route('/hello/', methods=['GET'])
 def hello_index():
     data = myStats.get_data()
