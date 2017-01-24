@@ -10,6 +10,32 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 _DEFAULT_ASN = 3701
 _CUSTOMER_BGP_COMMUNITY = '3701:370'
+_BGP_COMMUNITY_MAP = {
+      '3701:111': 'Level3-Prepend-1',
+      '3701:112': 'Level3-Prepend-2',
+      '3701:113': 'Level3-SEAT-Depref',
+      '3701:114': 'Level3-WSAC-Depref',
+      '3701:121': 'Level3-WSAC-Prepend-1',
+      '3701:122': 'Level3-WSAC-Prepend-2',
+      '3701:370': 'Customers',
+      '3701:371': 'Customers-NO-I2-RE',
+      '3701:372': 'Customers-NO-I2-CP',
+      '3701:380': 'Transit',
+      '3701:381': 'Level3-SEAT',
+      '3701:382': 'Level3-WSAC',
+      '3701:390': 'OIX',
+      '3701:391': 'I2-RE',
+      '3701:392': 'NWAX',
+      '3701:393': 'PNWGP',
+      '3701:394': 'I2-CPS',
+      '3701:395': 'SeattleIX',
+      '3701:500': 'PT-ODE-USERS',
+      '3701:501': 'PT-ODE-PROVIDERS',
+      '3701:666': 'BH-LOCAL',
+      '64496:0': 'Cymru-UTRS',
+      '65333:888': 'Cymru-BOGONs',
+      '65535:65281': 'No-Export',
+}
 
 app = Flask(__name__)
 
@@ -111,7 +137,7 @@ def avg_as_path_length(decimal_point_accuracy=3):
     all_prefixes = db.bgp.find()
     for prefix in all_prefixes:
         try:
-            as_path_counter += len(set(prefix['as_path']))  # sets remove duplicate ASNs
+            as_path_counter += len(set(prefix['as_path']))  # sets remove duplicate ASN prepending
         except:
             pass
     return(round(as_path_counter/(all_prefixes.count() * 1.0), decimal_point_accuracy))
@@ -137,7 +163,7 @@ def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY)
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
     else:
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find({'communities': community})}
-    return([{'asn': asn if asn is not None else _DEFAULT_ASN,  # Prefixes originated by the source ASN will not have an ASN
+    return([{'asn': asn if asn is not None else _DEFAULT_ASN,  # Set "None" ASNs to default
              'name': asn_name_query(asn),
              'ipv4_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count(),
              'ipv6_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()}
@@ -145,50 +171,32 @@ def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY)
 
 
 def cidr_breakdown():
+    """ Return a list of IPv4 and IPv6 network mask counters."""
     db = db_connect()
-    all_prefixes = db.bgp.find()
-    ipv4_list = []
-    ipv6_list = []
-    json_data = []
-    bads_list = []
-
-    for prefix in all_prefixes:
-        if prefix['ip_version'] == 4:
-            ipv4_list.append(int(prefix['prefix'].split('/', 1)[1]))
-            if int(prefix['prefix'].split('/', 1)[1]) > 24:
-                bads_list.append({'origin_as': int(prefix['origin_as']),
-                                  'prefix': prefix['prefix']})
-        if prefix['ip_version'] == 6:
-            ipv6_list.append(int(prefix['prefix'].split('/', 1)[1]))
-
-    ipv4_count = list(Counter(ipv4_list).items())
-    ipv6_count = list(Counter(ipv6_list).items())
-
-    for mask, count in ipv4_count:
-        json_data.append({
-            'mask': mask,
-            'count': count,
-            'ip_version': 4})
-    for mask, count in ipv6_count:
-        json_data.append({
-            'mask': mask,
-            'count': count,
-            'ip_version': 6})
-
-    return(json_data)
+    ipv4_masks = [int(prefix['prefix'].split('/', 1)[1])
+                  for prefix in db.bgp.find({'ip_version': 4})]
+    ipv6_masks = [int(prefix['prefix'].split('/', 1)[1])
+                  for prefix in db.bgp.find({'ip_version': 6})]
+    # Use a *Counter* to count masks in the lists, then combine, sort on mask, and return results
+    return(sorted(
+           [{'mask': mask,
+             'count': count,
+             'ip_version': 4}
+            for mask, count in list(Counter(ipv4_masks).items())]
+           +
+           [{'mask': mask,
+             'count': count,
+             'ip_version': 6}
+            for mask, count in list(Counter(ipv6_masks).items())], key=lambda x: x['mask']))
 
 
 def communities_count():
+    """Return a list of BGP communities and their count"""
     db = db_connect()
-    communities = db.bgp.distinct('communities')
-    json_data = []
-
-    for comm in communities:
-        json_data.append({
-            'community': comm,
-            'count': db.bgp.find({'communities': {'$regex': comm}}).count()})
-
-    return(json_data)
+    return([{'community': community,
+             'count': db.bgp.find({'communities': {'$regex': community}}).count(),
+             'name': _BGP_COMMUNITY_MAP.get(community)}
+            for community in db.bgp.distinct('communities')])
 
 
 @app.route('/', methods=['GET'])
