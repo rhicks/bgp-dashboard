@@ -51,15 +51,14 @@ def asn_name_query(asn):
         return('RFC5398 - Private Use ASN')
     if 64512 <= asn <= 65535 or 4200000000 <= asn <= 4294967295:
         return('RFC6996 - Private Use ASN')
-    else:
-        try:
-            query = 'as{number}.asn.cymru.com'.format(number=str(asn))
-            resolver = dns.resolver.Resolver()
-            answers = resolver.query(query, 'TXT')
-            for rdata in answers:
-                return(str(rdata).split('|')[-1].split(',', 2)[0].strip())
-        except:
-            return('(DNS Error)')
+    try:
+        query = 'as{number}.asn.cymru.com'.format(number=str(asn))
+        resolver = dns.resolver.Resolver()
+        answers = resolver.query(query, 'TXT')
+        for rdata in answers:
+            return(str(rdata).split('|')[-1].split(',', 2)[0].strip())
+    except:
+        return('(DNS Error)')
 
 
 def is_peer(asn):
