@@ -90,6 +90,7 @@ def build_object(prefix, v):
 
 def mongo_update(data):
     if data['withdrawal'] is True:
+        result = db.bgp.delete_one({"prefix": data['prefix']})
         print('Del: %s' % (data['prefix']))
     else:
         result = db.bgp.update({"prefix": data['prefix']}, data, upsert=True)
