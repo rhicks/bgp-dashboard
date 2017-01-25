@@ -11,6 +11,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 _DEFAULT_ASN = 3701
 _CUSTOMER_BGP_COMMUNITY = '3701:370'
 _TRANSIT_BGP_COMMUNITY = '3701:380'
+_PEER_BGP_COMMUNITY = '3701:39.'
 _BGP_COMMUNITY_MAP = {
       '3701:111': 'Level3-Prepend-1',
       '3701:112': 'Level3-Prepend-2',
@@ -227,6 +228,9 @@ def hello_index():
     peers = data['peers']
     source_asn = _DEFAULT_ASN
     source_asn_name = asn_name_query(_DEFAULT_ASN)
+    customer_bgp_community = _CUSTOMER_BGP_COMMUNITY
+    transit_bgp_community = _TRANSIT_BGP_COMMUNITY
+    peer_bgp_community = _PEER_BGP_COMMUNITY
     return render_template('hello.html', **locals())
 
 

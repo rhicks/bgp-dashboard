@@ -491,7 +491,7 @@
             element: 'graph_donut1',
             data: [
               {%- for comm in communities -%}
-                {% if comm.community[:-1] == ("3701:39") %}
+                {% if comm.community[:-1] == peer_bgp_community[:-1] %}
                   {label: "{{ comm.name }}", value: {{ comm.count }}},
                 {% endif %}
               {%- endfor -%}
@@ -508,7 +508,7 @@
             data: [
             {% set total_prefixes = data.ipv4_table_size + data.ipv6_table_size %}
             {%- for comm in communities -%}
-              {% if comm.community == "3701:380" %}
+              {% if comm.community == transit_bgp_community %}
                 {label: 'Peering', value: {{ (((comm.count - total_prefixes) / total_prefixes) * -100)|round }}},
                 {label: 'Transit', value: {{ ((comm.count / total_prefixes) * 100)|round }}},
               {% endif %}
