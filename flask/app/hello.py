@@ -98,6 +98,7 @@ def is_peer(asn):
 
 
 def is_transit(prefix, transit_bgp_community=_TRANSIT_BGP_COMMUNITY):
+    """Is the *prefix* counted as transit?"""
     if _TRANSIT_BGP_COMMUNITY in prefix['communities']:
         return True
     else:
@@ -110,6 +111,16 @@ def reverse_dns_query(ip):
         addr = dns.reversename.from_address(str(ip))
         resolver = dns.resolver.Resolver()
         return str(resolver.query(addr, 'PTR')[0])[:-1]
+    except:
+        return('(DNS Error)')
+
+
+def dns_query(name):
+    """Given a *name*, return the ip dns."""
+    try:
+        # addr = dns.reversename.from_address(str(ip))
+        resolver = dns.resolver.Resolver()
+        return str(resolver.query(str(name), 'A')[0])
     except:
         return('(DNS Error)')
 
@@ -221,26 +232,31 @@ def hello_index():
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
-    if ipaddress.ip_address(ip).version == 4:
-        network = find_network(ip, netmask=32)
-    elif ipaddress.ip_address(ip).version == 6:
-        network = find_network(ip, netmask=128)
-    else:
-        network = None
-    if network is None:
-        return jsonify({})
-    else:
-        return jsonify({'origin_as': network['origin_as'],
-                        'nexthop': network['nexthop'],
-                        'as_path': network['as_path'],
-                        'prefix': network['prefix'],
-                        'next_hop_asn': network['next_hop_asn'],
-                        'updated': epoch_to_date(network['timestamp']),
-                        'name': asn_name_query(network['origin_as']),
-                        'med': network['med'],
-                        'local_pref': network['local_pref'],
-                        'is_transit': is_transit(network),
-                        'communities': network['communities']})
+    try:
+        if ipaddress.ip_address(ip).version == 4:
+            network = find_network(ip, netmask=32)
+        elif ipaddress.ip_address(ip).version == 6:
+            network = find_network(ip, netmask=128)
+    except:
+        try:
+            ipadr = unicode(dns_query(ip).strip())
+            if ipaddress.ip_address(ipadr).version == 4:
+                network = find_network(ipadr, netmask=32)
+            elif ipaddress.ip_address(ipadr).version == 6:
+                network = find_network(ipadr, netmask=128)
+        except Exception, e:
+            return(jsonify(str(e)))
+    return jsonify({'origin_as': network['origin_as'],
+                    'nexthop': network['nexthop'],
+                    'as_path': network['as_path'],
+                    'prefix': network['prefix'],
+                    'next_hop_asn': network['next_hop_asn'],
+                    'updated': epoch_to_date(network['timestamp']),
+                    'name': asn_name_query(network['origin_as']),
+                    'med': network['med'],
+                    'local_pref': network['local_pref'],
+                    'is_transit': is_transit(network),
+                    'communities': network['communities']})
 
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>', methods=['GET'])
