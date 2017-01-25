@@ -2,6 +2,8 @@ gobgp:
   build: ./gobgp/
   ports:
     - 179:179
+  links:
+    - mongo
   volumes_from:
     - data
 
