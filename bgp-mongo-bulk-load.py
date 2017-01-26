@@ -103,13 +103,20 @@ def mongo_update(data):
 
 
 for line in fileinput.input():
-    v = json.loads(line)
-    if 'error' in v:
-        pass
-    prefix = None
-    if v[0]['attrs'][0]['type'] == 14:
-        for prefix in v[0]['attrs'][0]['value']:
-            mongo_update(build_object(prefix['prefix'], v))
-    else:
-        prefix = v[0]['nlri']['prefix']
-        mongo_update(build_object(prefix, v))
+    try:
+        v = json.loads(line)
+        if type(v) is not list:
+            pass
+        elif 'error' in v:
+            pass
+        else:
+            # print(v)
+            prefix = None
+            if v[0]['attrs'][0]['type'] == 14:
+                for prefix in v[0]['attrs'][0]['value']:
+                    mongo_update(build_object(prefix['prefix'], v))
+            else:
+                prefix = v[0]['nlri']['prefix']
+                mongo_update(build_object(prefix, v))
+    except:
+        print(line)
