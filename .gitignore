@@ -1,3 +1,4 @@
 log/
 *.pyc
 old-logs/
+testing-query-script.py
