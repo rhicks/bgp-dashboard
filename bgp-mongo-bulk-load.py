@@ -106,9 +106,15 @@ for line in fileinput.input():
     try:
         v = json.loads(line)
         if type(v) is not list:
-            pass
+            db.bgp.drop()
+            db.bgp.create_index('next_hop_asn')
+            db.bgp.create_index('prefix')
+            db.bgp.create_index('origin_as')
         elif 'error' in v:
-            pass
+            db.bgp.drop()
+            db.bgp.create_index('next_hop_asn')
+            db.bgp.create_index('prefix')
+            db.bgp.create_index('origin_as')
         else:
             # print(v)
             prefix = None
@@ -120,3 +126,7 @@ for line in fileinput.input():
                 mongo_update(build_object(prefix, v))
     except:
         print(line)
+        db.bgp.drop()
+        db.bgp.create_index('next_hop_asn')
+        db.bgp.create_index('prefix')
+        db.bgp.create_index('origin_as')
