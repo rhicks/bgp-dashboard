@@ -26,10 +26,10 @@ How it works
 ###### GoBGP
 The GoBGP container serves two functions:
 - Peer with the "real" network
--- Configure [gobgpd.conf](https://github.com/rhicks/bgp-dash/blob/master/gobgp/gobgpd.conf) to peer with the real network.
--- Only IPv4-Unicast and IPv6-Unicast supported at this time.
+  - Configure [gobgpd.conf](https://github.com/rhicks/bgp-dash/blob/master/gobgp/gobgpd.conf) to peer with the real network.
+  - Only IPv4-Unicast and IPv6-Unicast supported at this time.
 - Pass BGP updates into BGP
--- The [bgp-mongo-bulk-load.py](https://github.com/rhicks/bgp-dash/blob/master/bgp-mongo-bulk-load.py) script pipes the JSON updates from GoBGP into the MongoDB container
+  - The [bgp-mongo-bulk-load.py](https://github.com/rhicks/bgp-dash/blob/master/bgp-mongo-bulk-load.py) script pipes the JSON updates from GoBGP into the MongoDB container
 
 ###### MongoDB
 - Mongo receives JSON updates from the GoBGP container
