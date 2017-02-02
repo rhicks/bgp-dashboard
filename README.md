@@ -40,7 +40,7 @@ The GoBGP container serves two functions:
 - A JSON API is used on the backend to support the frontend and display Looking Glass queries
 
 
-Screenshots
+Screenshot
 ---------
 ![screenshot](bgp-dashboard.png)
 
@@ -48,8 +48,8 @@ Screenshots
 Install
 ---------
 ```
-$ git clone https://github.com/rhicks/bgp-dash.git
-$ cd bgp-dash
+$ git clone https://github.com/rhicks/bgp-dashboard.git
+$ cd bgp-dashboard
 $ # modify ./gobgp/gobgpd.conf to peer with your network
 $ # modify ./flask/app/hello.py globals to support your network BGP communities
 $ docker-compose build
