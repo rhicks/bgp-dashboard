@@ -149,7 +149,7 @@ def epoch_to_date(epoch):
     return(time.strftime('%Y-%m-%d %H:%M:%S %Z', time.gmtime(epoch)))
 
 
-def avg_as_path_length(decimal_point_accuracy=3):
+def avg_as_path_length(decimal_point_accuracy=2):
     """Return the computed average *as_path* length of all prefixes in the
     database.  Using a python *set* to remove any AS prepending."""
     db = db_connect()
@@ -215,7 +215,7 @@ def communities_count():
     db = db_connect()
     return([{'community': community,
              'count': db.bgp.find({'communities': {'$regex': str(community)}}).count(),
-             'name': _BGP_COMMUNITY_MAP.get(community)}
+             'name': None if _BGP_COMMUNITY_MAP.get(community) is None else _BGP_COMMUNITY_MAP.get(community)}
             for community in db.bgp.distinct('communities') if community is not None])
 
 
