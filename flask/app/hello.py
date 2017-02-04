@@ -214,9 +214,9 @@ def communities_count():
     """Return a list of BGP communities and their count"""
     db = db_connect()
     return([{'community': community,
-             'count': db.bgp.find({'communities': {'$regex': community}}).count(),
+             'count': db.bgp.find({'communities': {'$regex': str(community)}}).count(),
              'name': _BGP_COMMUNITY_MAP.get(community)}
-            for community in db.bgp.distinct('communities')])
+            for community in db.bgp.distinct('communities') if community is not None])
 
 
 @app.route('/', methods=['GET'])
