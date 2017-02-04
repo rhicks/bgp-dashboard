@@ -4,26 +4,39 @@ import json
 from pymongo import MongoClient
 import fileinput
 import ipaddress
-
-client = MongoClient('mongo')
-db = client.bgp
-db.bgp.drop()
-db.bgp.create_index('next_hop_asn')
-db.bgp.create_index('prefix')
-db.bgp.create_index('origin_as')
+import sys
 
 
-def build_object(prefix, v):
-    nexthop = None
-    as_path = None
-    next_hop_asn = None
-    origin_as = None
-    med = None
-    local_pref = None
-    withdrawal = None
-    ip_version = ipaddress.ip_address(prefix.split('/', 1)[0]).version
+def db_connect():
+    """Return a connection to the Mongo Database."""
+    client = MongoClient(host='mongo')
+    return client.bgp
+
+
+def initialize_database(db):
+    """Drop existing data and create indexes"""
+    db.bgp.drop()
+    db.bgp.create_index('prefix')
+    db.bgp.create_index('next_hop_asn')
+    db.bgp.create_index('origin_as')
+    db.bgp.create_index('nexthop')
+    db.bgp.create_index('as_path')
+    db.bgp.create_index('med')
+    db.bgp.create_index('local_pref')
+    db.bgp.create_index('withdrawal')
+    db.bgp.create_index('ip_version')
+    db.bgp.create_index('communities')
+    db.bgp.create_index('prefix')
+
+
+def build_json_update_entry(update_entry):
+    """Take individual update entries from GoBGP and build json objects to be
+    consumed as MonogoDB entries."""
+    nexthop = as_path = next_hop_asn = origin_as = med = local_pref = withdrawal = None
     communities = []
-    for attribute in v[0]['attrs']:
+    prefix = update_entry['nlri']['prefix']
+    ip_version = ipaddress.ip_address(prefix.split('/', 1)[0]).version
+    for attribute in update_entry['attrs']:
         if attribute['type'] == 3:
             nexthop = attribute['nexthop']
         elif attribute['type'] == 14:
@@ -64,16 +77,18 @@ def build_object(prefix, v):
                 local_pref = attribute['value']
             except:
                 local_pref = None
-    if 'withdrawal' in v[0]:
-        withdrawal = v[0]['withdrawal']
+        else:
+            pass
+    if 'withdrawal' in update_entry:
+        withdrawal = update_entry['withdrawal']
     else:
         withdrawal = None
-    if 'age' in v[0]:
-        timestamp = v[0]['age']
+    if 'age' in update_entry:
+        timestamp = update_entry['age']
     else:
         timestamp = None
 
-    data = {'prefix': prefix,
+    return {'prefix': prefix,
             'nexthop': nexthop,
             'as_path': as_path,
             'next_hop_asn': next_hop_asn,
@@ -85,10 +100,9 @@ def build_object(prefix, v):
             'communities': communities,
             'timestamp': timestamp}
 
-    return(data)
 
-
-def mongo_update(data):
+def mongo_update(data, db):
+    """Update the mongodb with json BGP update objects."""
     if data['withdrawal'] is True:
         result = db.bgp.delete_one({"prefix": data['prefix']})
         print('Del: %s' % (data['prefix']))
@@ -102,31 +116,23 @@ def mongo_update(data):
             print('???: %s' % (data['prefix']))
 
 
-for line in fileinput.input():
-    try:
-        v = json.loads(line)
-        if type(v) is not list:
-            db.bgp.drop()
-            db.bgp.create_index('next_hop_asn')
-            db.bgp.create_index('prefix')
-            db.bgp.create_index('origin_as')
-        elif 'error' in v:
-            db.bgp.drop()
-            db.bgp.create_index('next_hop_asn')
-            db.bgp.create_index('prefix')
-            db.bgp.create_index('origin_as')
-        else:
-            # print(v)
-            prefix = None
-            if v[0]['attrs'][0]['type'] == 14:
-                for prefix in v[0]['attrs'][0]['value']:
-                    mongo_update(build_object(prefix['prefix'], v))
-            else:
-                prefix = v[0]['nlri']['prefix']
-                mongo_update(build_object(prefix, v))
-    except:
-        print(line)
-        db.bgp.drop()
-        db.bgp.create_index('next_hop_asn')
-        db.bgp.create_index('prefix')
-        db.bgp.create_index('origin_as')
+def main():
+    """Read GoBGP RIB JSON update lists from stdin and send individual entries
+    to be parsed and fed into Mongo."""
+    db = db_connect()
+    initialize_database(db)
+    for line in fileinput.input():
+        try:
+            update_list = json.loads(line)
+            for update_entry in update_list:
+                if 'error' in update_entry:
+                    pass
+                else:
+                    mongo_update(build_json_update_entry(update_entry), db)
+        except Exception as err:
+            print(err)
+            pass
+
+
+if __name__ == "__main__":
+    sys.exit(main())
