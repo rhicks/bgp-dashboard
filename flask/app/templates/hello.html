@@ -60,7 +60,7 @@
           <div class="">
             <div class="row top_tiles">
               <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                <div class="tile-stats">
+                <div class="tile-stats" id="peers_box">
                   <div class="icon"><i id="peersIDIcon"></i></div>
                   <div class="count" id="peersID">0</div>
                   <h3>Peer Count</h3>
@@ -360,6 +360,22 @@
     }
   }
 
+  function update_sparklines(data, how_many_times)
+  {
+    while (how_many_times > 0)
+    {
+      peer_count_sparkline_data.push(data['peer_count']);
+      ipv4_table_sparkline_data.push(data['ipv4_table_size']);
+      ipv6_table_sparkline_data.push(data['ipv6_table_size']);
+      nexthop_count_sparkline_data.push(data['nexthop_ip_count']);
+      avg_as_path_length_data.push(data['avg_as_path_length']);
+      customer_count_data.push(data['customer_count']);
+      customer_ipv4_prefix_data.push(data['customer_ipv4_prefixes']);
+      customer_ipv6_prefix_data.push(data['customer_ipv6_prefixes']);
+      how_many_times--;
+    }
+  }
+
   var peer_count_sparkline_data = [];
   var ipv4_table_sparkline_data = [];
   var ipv6_table_sparkline_data = [];
@@ -374,6 +390,7 @@
     update_counters.count = update_counters.count || 0;
     jQuery.getJSON("/bgp/api/v1.0/stats", function(data)
     {
+      update_sparklines(data, 1)
       if (update_counters.count > 0) //only update times after the first run
       {
         up_or_down_checker('peersID', data, 'peer_count');
@@ -386,8 +403,17 @@
         up_or_down_checker('customerIPv6Prefixes', data, 'customer_ipv6_prefixes');
       }
 
-      update_counters.count += 1;
-
+      update_counters.count = 1;
+      sparkline_max_width = $("div#peers_box.tile-stats").width() - 10
+      sparkline_data_width = (peer_count_sparkline_data.length * 2)
+      if (sparkline_data_width < sparkline_max_width)
+      {
+        sparkline_width = sparkline_data_width
+      }
+      else
+      {
+        sparkline_width = sparkline_max_width
+      }
       jQuery('#peersID').text(data['peer_count'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#ipv4TableSize').text(data['ipv4_table_size'].toLocaleString('en-US', {minimumFractionDigits: 0}));
       jQuery('#ipv6TableSize').text(data['ipv6_table_size'].toLocaleString('en-US', {minimumFractionDigits: 0}));
@@ -396,18 +422,18 @@
       jQuery('#customerCount').text(data['customer_count']);
       jQuery('#customerIPv4Prefixes').text(data['customer_ipv4_prefixes']);
       jQuery('#customerIPv6Prefixes').text(data['customer_ipv6_prefixes']);
-      jQuery('.peers_count_sparkline').sparkline(peer_count_sparkline_data);
-      jQuery('.ipv4_table_sparkline').sparkline(ipv4_table_sparkline_data);
-      jQuery('.ipv6_table_sparkline').sparkline(ipv6_table_sparkline_data);
-      jQuery('.nexthop_count_sparkline').sparkline(nexthop_count_sparkline_data);
-      jQuery('.avg_as_path_length_sparkline').sparkline(avg_as_path_length_data);
-      jQuery('.customer_count_sparkline').sparkline(customer_count_data);
-      jQuery('.customer_ipv4_prefixes_sparkline').sparkline(customer_ipv4_prefix_data);
-      jQuery('.customer_ipv6_prefixes_sparkline').sparkline(customer_ipv6_prefix_data);
+      jQuery('.peers_count_sparkline').sparkline(peer_count_sparkline_data, {width: sparkline_width});
+      jQuery('.ipv4_table_sparkline').sparkline(ipv4_table_sparkline_data, {width: sparkline_width});
+      jQuery('.ipv6_table_sparkline').sparkline(ipv6_table_sparkline_data, {width: sparkline_width});
+      jQuery('.nexthop_count_sparkline').sparkline(nexthop_count_sparkline_data, {width: sparkline_width});
+      jQuery('.avg_as_path_length_sparkline').sparkline(avg_as_path_length_data, {width: sparkline_width});
+      jQuery('.customer_count_sparkline').sparkline(customer_count_data, {width: sparkline_width});
+      jQuery('.customer_ipv4_prefixes_sparkline').sparkline(customer_ipv4_prefix_data, {width: sparkline_width});
+      jQuery('.customer_ipv6_prefixes_sparkline').sparkline(customer_ipv6_prefix_data, {width: sparkline_width});
 
 
       //$('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
-      if (peer_count_sparkline_data.length >= 200)
+      if (peer_count_sparkline_data.length > (sparkline_width / 4))
       {
         peer_count_sparkline_data.shift();
         ipv4_table_sparkline_data.shift();
@@ -418,19 +444,12 @@
         customer_ipv4_prefix_data.shift();
         customer_ipv6_prefix_data.shift();
       }
-      peer_count_sparkline_data.push(data['peer_count']);
-      ipv4_table_sparkline_data.push(data['ipv4_table_size']);
-      ipv6_table_sparkline_data.push(data['ipv6_table_size']);
-      nexthop_count_sparkline_data.push(data['nexthop_ip_count']);
-      avg_as_path_length_data.push(data['avg_as_path_length']);
-      customer_count_data.push(data['customer_count']);
-      customer_ipv4_prefix_data.push(data['customer_ipv4_prefixes']);
-      customer_ipv6_prefix_data.push(data['customer_ipv6_prefixes']);
+      update_sparklines(data, 1)
     });
   }
 
   jQuery(document).ready(update_counters());
-  setInterval(function() { update_counters() }, 5000);
+  setInterval(function() { update_counters() }, 4000);
 
   </script>
 
@@ -484,7 +503,7 @@
                 {% endif %}
               {%- endfor -%}
             ],
-            colors: ['#26B99A', '#34495E', '#E59443', '#3498DB', '#E74C3C', '#ACADAC'],
+            colors: ['#26B99A', '#34495E', '#E59443', '#3498DB', '#E74C3C', '#FF7BAC', '#26B99A', '#34495E', '#E59443', '#3498DB', '#E74C3C', '#333333'],
             formatter: function (y) {
               return y;
             },
