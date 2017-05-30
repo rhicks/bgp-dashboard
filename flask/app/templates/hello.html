@@ -405,7 +405,7 @@
 
       update_counters.count = 1;
       sparkline_max_width = $("div#peers_box.tile-stats").width() - 10
-      sparkline_data_width = (peer_count_sparkline_data.length * 2)
+      sparkline_data_width = peer_count_sparkline_data.length
       if (sparkline_data_width < sparkline_max_width)
       {
         sparkline_width = sparkline_data_width
@@ -433,18 +433,29 @@
 
 
       //$('.dynamicbar').sparkline(myvalues, {type: 'bar', barColor: 'green'} );
-      if (peer_count_sparkline_data.length > (sparkline_width / 4))
+      console.log("sparkline_data_width: " + sparkline_data_width)
+      console.log("sparkline_width: " + sparkline_width)
+      console.log("sparkline_max_width: " + sparkline_max_width)
+      if (sparkline_data_width > 1)
       {
-        peer_count_sparkline_data.shift();
-        ipv4_table_sparkline_data.shift();
-        ipv6_table_sparkline_data.shift();
-        nexthop_count_sparkline_data.shift();
-        avg_as_path_length_data.shift();
-        customer_count_data.shift();
-        customer_ipv4_prefix_data.shift();
-        customer_ipv6_prefix_data.shift();
+        //peer_count_sparkline_data.shift();
+        peer_count_sparkline_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        //ipv4_table_sparkline_data.shift();
+        ipv4_table_sparkline_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        // ipv6_table_sparkline_data.shift();
+        ipv6_table_sparkline_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        // nexthop_count_sparkline_data.shift();
+        nexthop_count_sparkline_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        // avg_as_path_length_data.shift();
+        avg_as_path_length_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        // customer_count_data.shift();
+        customer_count_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        // customer_ipv4_prefix_data.shift();
+        customer_ipv4_prefix_data.splice(0, (sparkline_data_width - sparkline_max_width))
+        // customer_ipv6_prefix_data.shift();
+        customer_ipv6_prefix_data.splice(0, (sparkline_data_width - sparkline_max_width))
       }
-      update_sparklines(data, 1)
+      //update_sparklines(data, 2)
     });
   }
 

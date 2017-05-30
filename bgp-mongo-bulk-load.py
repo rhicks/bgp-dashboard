@@ -27,7 +27,7 @@ def initialize_database(db):
     db.bgp.create_index('ip_version')
     db.bgp.create_index('communities')
     db.bgp.create_index('prefix')
-
+    
 
 def build_json_update_entry(update_entry):
     """Take individual update entries from GoBGP and build json objects to be
