@@ -2,3 +2,5 @@ log/
 *.pyc
 old-logs/
 testing-query-script.py
+example-scripts/
+.ropeproject/
