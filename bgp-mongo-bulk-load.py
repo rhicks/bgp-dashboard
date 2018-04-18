@@ -1,137 +1,134 @@
 #! /usr/bin/env python
 
+from asn import ASN
+from prefix import Prefix
+import constants as C
 import json
-from pymongo import MongoClient
-import fileinput
-import ipaddress
 import sys
+from pprint import pprint
+import time
 
-
-def db_connect():
-    """Return a connection to the Mongo Database."""
-    client = MongoClient(host='mongo')
-    return client.bgp
-
-
-def initialize_database(db):
-    """Drop existing data and create indexes"""
-    db.bgp.drop()
-    db.bgp.create_index('prefix')
-    db.bgp.create_index('next_hop_asn')
-    db.bgp.create_index('origin_as')
-    db.bgp.create_index('nexthop')
-    db.bgp.create_index('as_path')
-    db.bgp.create_index('med')
-    db.bgp.create_index('local_pref')
-    db.bgp.create_index('withdrawal')
-    db.bgp.create_index('ip_version')
-    db.bgp.create_index('communities')
-    db.bgp.create_index('prefix')
-    
 
 def build_json_update_entry(update_entry):
-    """Take individual update entries from GoBGP and build json objects to be
-    consumed as MonogoDB entries."""
-    nexthop = as_path = next_hop_asn = origin_as = med = local_pref = withdrawal = None
-    communities = []
+    """Given an update entry from GoBGP, return an update tuple"""
+    prefix = origin = as_path = nexthop = med = local_pref = atomic_aggregate = None
+    aggregator = communities = originator_id = cluster_list = withdrawal = age = None
     prefix = update_entry['nlri']['prefix']
-    ip_version = ipaddress.ip_address(prefix.split('/', 1)[0]).version
     for attribute in update_entry['attrs']:
-        if attribute['type'] == 3:
-            nexthop = attribute['nexthop']
-        elif attribute['type'] == 14:
-            nexthop = attribute['nexthop']
-        elif attribute['type'] == 2:
+        if attribute['type'] == C.ORIGIN:
+            origin = attribute['value']
+        elif attribute['type'] == C.AS_PATH:
             try:
                 as_path = attribute['as_paths'][0]['asns']
-            except:
-                as_path = None
-            try:
-                next_hop_asn = attribute['as_paths'][0]['asns'][0]
-            except:
-                next_hop_asn = None
-            try:
-                origin_as = attribute['as_paths'][0]['asns'][-1]
-            except:
-                origin_as = None
-        elif attribute['type'] == 7:
-            try:
-                origin_as = attribute['as']
-            except:
-                origin_as = None
-        elif attribute['type'] == 4:
+            except Exception:
+                as_path = []
+        elif attribute['type'] == C.NEXT_HOP:
+            nexthop = attribute['nexthop']
+        elif attribute['type'] == C.MULTI_EXIT_DISC:
             try:
                 med = attribute['metric']
-            except:
+            except Exception:
                 med = None
-        elif attribute['type'] == 8:
-            try:
-                communities = []
-                for number in attribute['communities']:
-                    communities.append(str(int(bin(number)[:-16], 2)) + ":" +
-                                       str(int(bin(number)[-16:], 2)))
-            except:
-                communities = []
-        elif attribute['type'] == 5:
+        elif attribute['type'] == C.LOCAL_PREF:
             try:
                 local_pref = attribute['value']
-            except:
+            except Exception:
                 local_pref = None
+        elif attribute['type'] == C.ATOMIC_AGGREGATE:
+            pass
+        elif attribute['type'] == C.AGGREGATOR:
+            pass
+        elif attribute['type'] == C.COMMUNITY:
+            communities = attribute['communities']
+        elif attribute['type'] == C.ORIGINATOR_ID:
+            originator_id = attribute['value']
+        elif attribute['type'] == C.CLUSTER_LIST:
+            cluster_list = attribute['value']
+        elif attribute['type'] == C.MP_REACH_NLRI:
+            nexthop = attribute['nexthop']
+        elif attribute['type'] == C.MP_UNREACH_NLRI:
+            pass
+        elif attribute['type'] == C.EXTENDED_COMMUNITIES:
+            pass
         else:
             pass
     if 'withdrawal' in update_entry:
         withdrawal = update_entry['withdrawal']
     else:
-        withdrawal = None
+        withdrawal = False
     if 'age' in update_entry:
-        timestamp = update_entry['age']
+        age = update_entry['age']
     else:
-        timestamp = None
+        age = None
 
-    return {'prefix': prefix,
-            'nexthop': nexthop,
-            'as_path': as_path,
-            'next_hop_asn': next_hop_asn,
-            'origin_as': origin_as,
-            'med': med,
-            'local_pref': local_pref,
-            'withdrawal': withdrawal,
-            'ip_version': ip_version,
-            'communities': communities,
-            'timestamp': timestamp}
-
-
-def mongo_update(data, db):
-    """Update the mongodb with json BGP update objects."""
-    if data['withdrawal'] is True:
-        result = db.bgp.delete_one({"prefix": data['prefix']})
-        print('Del: %s' % (data['prefix']))
-    else:
-        result = db.bgp.update({"prefix": data['prefix']}, data, upsert=True)
-        if result['nModified'] == 0:
-            print('Add: %s' % (data['prefix']))
-        elif result['nModified'] == 1:
-            print('Mod: %s' % (data['prefix']))
-        else:
-            print('???: %s' % (data['prefix']))
+    return prefix, origin, as_path, nexthop, med, local_pref, atomic_aggregate, aggregator, communities, originator_id, cluster_list, withdrawal, age
 
 
 def main():
     """Read GoBGP RIB JSON update lists from stdin and send individual entries
     to be parsed and fed into Mongo."""
-    db = db_connect()
-    initialize_database(db)
-    for line in fileinput.input():
+    line_counter = 0
+    for line in sys.stdin:
         try:
             update_list = json.loads(line)
             for update_entry in update_list:
                 if 'error' in update_entry:
                     pass
                 else:
-                    mongo_update(build_json_update_entry(update_entry), db)
+                    # print(update_entry)
+                    # build_objects(update_entry)
+                    Prefix(build_json_update_entry(update_entry))
+                    line_counter += 1
+                    if line_counter % 5000 == 0:
+                        print(".", end='', flush=True)
+                    # print(new_prefix.origin_as.name)
+                    # print(new_prefix.origin_as.prefixes[0].origin_as.name)
+                    # print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(new_prefix.timestamp)))
+                    # print(new_prefix.timestamp)
+                    # pprint(vars(new_prefix))
+                    # print(Prefix.ipv4_prefix_count)
+                    # print(Prefix.ipv6_prefix_count)
         except Exception as err:
             print(err)
             pass
+    # for asn, asn_obj in ASN.asn_dict.items():
+    #     print(str(asn) + ": " + str(len(asn_obj.prefixes)) + ": " + asn_obj.name)
+    # #     for prefix, prefix_obj in asn_obj.prefixes.items():
+    # #         if len(prefix_obj.previous_as_paths) == 1:
+    # #             print(prefix, prefix_obj.previous_as_paths)
+    # #         # print(str(asn) + ":" + prefix + ":" + str(prefix_obj.withdrawal) + ":" + prefix_obj.origin_as.name)
+    # #         pass
+    # for prefix, prefix_obj in Prefix.prefix_dict.items():
+    #     if len(prefix_obj.previous_as_paths) > 1:
+    #         for path, timestamp in prefix_obj.previous_as_paths:
+    #             print(prefix, path, timestamp)
+    #     print()
+    # for asn, asn_obj in ASN.asn_dict.items():
+    #     print(str(asn) + " - " + asn_obj.name)
+    #     for prefix, prefix_obj in asn_obj.prefixes.items():
+    #         print(prefix)
+    #         for path, epoch in prefix_obj.previous_as_paths:
+    #             print(path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))))
+    print()
+    print()
+    # print(len(ASN.asn_dict))
+    # print(len(Prefix.prefix_dict))
+    # # myasn = ASN.asn_dict.get(23752)
+    for prefix, prefix_obj in ASN.asn_dict.get(3701).prefixes.items():
+        print(prefix)
+        for path, epoch in prefix_obj.previous_as_paths:
+            print(path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))))
+        # pprint(vars(prefix_obj))
+        # print(prefix_obj.origin_as.name)
+    for prefix, prefix_obj in Prefix.prefix_dict.items():
+        if prefix_obj.communities and '3701:370' in prefix_obj.communities:
+            for path, timestamp in prefix_obj.previous_as_paths:
+                print(prefix_obj.origin_as.name, prefix, path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))))
+            print()
+    # for prefix, prefix_obj in Prefix.prefix_dict.items():
+
+    print(len(ASN.asn_dict))
+    print(len(Prefix.prefix_dict))
 
 
 if __name__ == "__main__":

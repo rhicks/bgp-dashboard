@@ -6,6 +6,7 @@ gobgp:
     - mongo
   volumes_from:
     - data
+  restart: always
 
 mongo:
   build: ./mongo/
