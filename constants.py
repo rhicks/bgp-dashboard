@@ -1,3 +1,6 @@
+import logging
+logging.basicConfig(level=logging.CRITICAL)
+
 _DEFAULT_ASN = 3701
 # BGP Attributes
 PREFIX = 0

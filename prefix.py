@@ -36,13 +36,13 @@ class Prefix:
                 if self.as_path != prefix_obj.previous_as_paths[0][0]:
                     prefix_obj.previous_as_paths.append((self.as_path, time.time()))
         if not self.withdrawal and self.prefix not in self.origin_as.prefixes:
-            # print(self.origin_as.asn)
-            # print("ADD: " + self.prefix)
+            C.logging.debug(self.origin_as.asn)
+            C.logging.debug("ADD: " + self.prefix)
             self.origin_as.prefixes[self.prefix] = self
             self.previous_as_paths.append((self.as_path, time.time()))
         if self.withdrawal and self.prefix in self.origin_as.prefixes:
-            # print(self.origin_as.asn)
-            # print("DEL: " + self.prefix)
+            C.logging.debug(self.origin_as.asn)
+            C.logging.debug("DEL: " + self.prefix)
             self.previous_as_paths.append((self.as_path, time.time()))
             del self.origin_as.prefixes[self.prefix]
 

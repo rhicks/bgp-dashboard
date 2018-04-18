@@ -1,8 +1,6 @@
 import constants as C
 import dns.resolver
 import threading
-# from multiprocessing.pool import ThreadPool
-# pool = ThreadPool(processes=1)
 
 
 def asn_name_query(self, as_number):
@@ -15,6 +13,7 @@ def asn_name_query(self, as_number):
     if 64512 <= as_number <= 65535 or 4200000000 <= as_number <= 4294967295:
         return('RFC6996 - Private Use ASN')
     try:
+        C.logging.debug(as_number)
         query = 'as{number}.asn.cymru.com'.format(number=str(as_number))
         resolver = dns.resolver.Resolver()
         answers = resolver.query(query, 'TXT')
