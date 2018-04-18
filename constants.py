@@ -1,5 +1,6 @@
 import logging
 logging.basicConfig(level=logging.CRITICAL)
+# logging.basicConfig(level=logging.DEBUG)
 
 _DEFAULT_ASN = 3701
 # BGP Attributes

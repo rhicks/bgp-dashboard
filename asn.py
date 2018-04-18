@@ -5,7 +5,7 @@ import threading
 
 def asn_name_query(self, as_number):
     """Given an *asn*, return the name."""
-    # print(as_number)
+    C.logging.debug(as_number)
     if as_number is None:
         as_number = C._DEFAULT_ASN
     if 64496 <= as_number <= 64511:
@@ -40,7 +40,7 @@ class ASN:
     def name(self, as_number):
         try:
             threading.Thread(target=asn_name_query, args=(self, as_number)).start()
-            # self._name = asn_name_query(asn)
+            # self._name = asn_name_query(as_number)
             # print(self.name)
             # self._name = "BYPASS"
             # async_result = pool.apply_async(asn_name_query, (self, asn))

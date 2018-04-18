@@ -8,12 +8,12 @@ gobgp:
     - data
   restart: always
 
-mongo:
-  build: ./mongo/
-  expose:
-    - 27017
-  volumes_from:
-    - data
+# mongo:
+#   build: ./mongo/
+#   expose:
+#     - 27017
+#   volumes_from:
+#     - data
 
 flask:
   build: ./flask/
