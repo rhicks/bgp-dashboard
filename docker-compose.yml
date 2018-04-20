@@ -2,8 +2,8 @@ gobgp:
   build: ./gobgp/
   ports:
     - 179:179
-  links:
-    - mongo
+  # links:
+  #   - mongo
   volumes_from:
     - data
   restart: always
@@ -19,8 +19,8 @@ flask:
   build: ./flask/
   ports:
     - 80:80
-  links:
-    - mongo
+  # links:
+  #   - mongo
   volumes_from:
     - data
 

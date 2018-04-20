@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 from asn import ASN
 from prefix import Prefix
@@ -109,26 +109,26 @@ def main():
     #         print(prefix)
     #         for path, epoch in prefix_obj.previous_as_paths:
     #             print(path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))))
-    print()
-    print()
+    # print()
+    # print()
+    # # print(len(ASN.asn_dict))
+    # # print(len(Prefix.prefix_dict))
+    # # # myasn = ASN.asn_dict.get(23752)
+    # for prefix, prefix_obj in ASN.asn_dict.get(3701).prefixes.items():
+    #     print(prefix)
+    #     for path, epoch in prefix_obj.previous_as_paths:
+    #         print(path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))))
+    #     # pprint(vars(prefix_obj))
+    #     # print(prefix_obj.origin_as.name)
+    # for prefix, prefix_obj in Prefix.prefix_dict.items():
+    #     if prefix_obj.communities and '3701:370' in prefix_obj.communities:
+    #         for path, timestamp in prefix_obj.previous_as_paths:
+    #             print(prefix_obj.origin_as.name, prefix, path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))))
+    #         print()
+    # # for prefix, prefix_obj in Prefix.prefix_dict.items():
+    #
     # print(len(ASN.asn_dict))
     # print(len(Prefix.prefix_dict))
-    # # myasn = ASN.asn_dict.get(23752)
-    for prefix, prefix_obj in ASN.asn_dict.get(3701).prefixes.items():
-        print(prefix)
-        for path, epoch in prefix_obj.previous_as_paths:
-            print(path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))))
-        # pprint(vars(prefix_obj))
-        # print(prefix_obj.origin_as.name)
-    for prefix, prefix_obj in Prefix.prefix_dict.items():
-        if prefix_obj.communities and '3701:370' in prefix_obj.communities:
-            for path, timestamp in prefix_obj.previous_as_paths:
-                print(prefix_obj.origin_as.name, prefix, path, (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))))
-            print()
-    # for prefix, prefix_obj in Prefix.prefix_dict.items():
-
-    print(len(ASN.asn_dict))
-    print(len(Prefix.prefix_dict))
 
 
 if __name__ == "__main__":

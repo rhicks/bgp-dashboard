@@ -1,9 +1,11 @@
 FROM osrg/gobgp:latest
 
 RUN apt-get update && apt-get install -y \
-    python-pip
+    python3
+RUN apt-get update && apt-get install -y \
+    python3-pip
 COPY ./requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
 COPY ./gobgpd.conf /root/gobgp/gobgpd.conf
 COPY ./entrypoint.sh /root/gobgp/entrypoint.sh
 RUN chmod +x /root/gobgp/entrypoint.sh
