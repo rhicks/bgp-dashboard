@@ -1,4 +1,8 @@
-log/
+.gitignore
+venv/*
+wip/*
+log/*
+!log/sample_data.log
+.ropeproject/
+__pycache__/
 *.pyc
-old-logs/
-testing-query-script.py
