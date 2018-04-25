@@ -6,6 +6,7 @@ import constants as C
 from pymongo import MongoClient
 from copy import copy
 from datetime import datetime
+import ipaddress
 
 
 def db_connect(host='mongodb'):
@@ -57,6 +58,7 @@ def build_json(update_entry):
     key/value dict and return"""
     update_json = {  # set defaults
         '_id': update_entry['nlri']['prefix'],
+        'ip_version': ipaddress.ip_address(update_entry['nlri']['prefix'].split('/', 1)[0]).version,
         'route_origin': None,
         'as_path': [],
         'nexthop': None,
