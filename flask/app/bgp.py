@@ -11,6 +11,7 @@ import constants as C
 
 
 app = Flask(__name__)
+app.config['JSON_SORT_KEYS'] = False
 
 
 def db_connect():
@@ -26,19 +27,19 @@ def take(n, iterable):
 
 def find_network(ip, netmask):
     """Given an IPv4 or IPv6 address, recursively search for and return the most
-       specific prefix in the MongoDB collection.
+       specific prefix in the MongoDB collection that is active.
     """
     try:
         db = db_connect()
         network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
-        result = db.bgp.find_one({'_id': network})
+        result = db.bgp.find_one({'_id': network, 'active': True})
         if result is not None:
             return(result)
         elif netmask == 0:
             return(None)
         else:
             return(find_network(ip, netmask-1))
-    except:
+    except Exception:
         return(None)
 
 
@@ -56,14 +57,14 @@ def asn_name_query(asn):
         answers = resolver.query(query, 'TXT')
         for rdata in answers:
             return(str(rdata).split('|')[-1].split(',', 2)[0].strip())
-    except:
+    except Exception:
         return('(DNS Error)')
 
 
 def is_peer(asn):
     """Is *asn* in the list of directy connected ASNs."""
     db = db_connect()
-    if asn in db.bgp.distinct('next_hop_asn'):
+    if asn in db.bgp.distinct('nexthop_asn'):
         return True
     else:
         return False
@@ -83,7 +84,7 @@ def reverse_dns_query(ip):
         addr = dns.reversename.from_address(str(ip))
         resolver = dns.resolver.Resolver()
         return str(resolver.query(addr, 'PTR')[0])[:-1]
-    except:
+    except Exception:
         return('(DNS Error)')
 
 
@@ -93,26 +94,26 @@ def dns_query(name):
         # addr = dns.reversename.from_address(str(ip))
         resolver = dns.resolver.Resolver()
         return str(resolver.query(str(name), 'A')[0])
-    except:
+    except Exception:
         return('(DNS Error)')
 
 
 def peer_count():
     """Return the number of directly connected ASNs."""
     db = db_connect()
-    return(len(db.bgp.distinct('next_hop_asn')))
+    return(len(db.bgp.distinct('nexthop_asn', {'active': True})))
 
 
 def prefix_count(version):
     """Given the IP version, return the number of prefixes in the database."""
     db = db_connect()
-    return(db.bgp.find({'ip_version': version}).count())
+    return(db.bgp.find({'ip_version': version, 'active': True}).count())
 
 
 def nexthop_ip_count():
     """Return the number of unique next hop IPv4 and IPv6 addresses."""
     db = db_connect()
-    return(len(db.bgp.distinct('nexthop')))
+    return(len(db.bgp.distinct('nexthop', {'active': True})))
 
 
 def epoch_to_date(epoch):
@@ -125,11 +126,11 @@ def avg_as_path_length(decimal_point_accuracy=2):
     database.  Using a python *set* to remove any AS prepending."""
     db = db_connect()
     as_path_counter = 0
-    all_prefixes = db.bgp.find()
+    all_prefixes = db.bgp.find({'active': True})
     for prefix in all_prefixes:
         try:
             as_path_counter += len(set(prefix['as_path']))  # sets remove duplicate ASN prepending
-        except:
+        except Exception:
             pass
     return(round(as_path_counter/(all_prefixes.count() * 1.0), decimal_point_accuracy))
 
@@ -138,8 +139,8 @@ def top_peers(count):
     """Return a sorted list of top peer dictionaries ordered by prefix count.
     Limit to *count*."""
     db = db_connect()
-    peers = {peer: db.bgp.find({'next_hop_asn': peer}).count()
-             for peer in db.bgp.distinct('next_hop_asn')}
+    peers = {peer: db.bgp.find({'nexthop_asn': peer, 'active': True}).count()
+             for peer in db.bgp.distinct('nexthop_asn')}
     return([{'asn': asn[0],
              'count': asn[1],
              'name': asn_name_query(asn[0])}
@@ -151,23 +152,23 @@ def get_list_of(customers=False, peers=False, community=C.CUSTOMER_BGP_COMMUNITY
     return by setting *customers* or *peers* to True."""
     db = db_connect()
     if peers:
-        query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
+        query_results = {prefix['nexthop_asn'] for prefix in db.bgp.find({'active': True})}
     else:
-        query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find({'communities': community})}
+        query_results = {prefix['nexthop_asn'] for prefix in db.bgp.find({'communities': community, 'active': True})}
     return([{'asn': asn if asn is not None else C.DEFAULT_ASN,  # Set "None" ASNs to default
              'name': asn_name_query(asn),
-             'ipv4_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count(),
-             'ipv6_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()}
+             'ipv4_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 4, 'active': True}).count(),
+             'ipv6_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 6, 'active': True}).count()}
             for asn in query_results])
 
 
 def cidr_breakdown():
     """ Return a list of IPv4 and IPv6 network mask counters."""
     db = db_connect()
-    ipv4_masks = [int(prefix['prefix'].split('/', 1)[1])
-                  for prefix in db.bgp.find({'ip_version': 4})]
-    ipv6_masks = [int(prefix['prefix'].split('/', 1)[1])
-                  for prefix in db.bgp.find({'ip_version': 6})]
+    ipv4_masks = [int(prefix['_id'].split('/', 1)[1])
+                  for prefix in db.bgp.find({'ip_version': 4, 'active': True})]
+    ipv6_masks = [int(prefix['_id'].split('/', 1)[1])
+                  for prefix in db.bgp.find({'ip_version': 6, 'active': True})]
     # Use a *Counter* to count masks in the lists, then combine, sort on mask, and return results
     return(sorted(
            [{'mask': mask,
@@ -185,7 +186,7 @@ def communities_count():
     """Return a list of BGP communities and their count"""
     db = db_connect()
     return([{'community': community,
-             'count': db.bgp.find({'communities': {'$regex': str(community)}}).count(),
+             'count': db.bgp.find({'communities': {'$regex': str(community)}, 'active': True}).count(),
              'name': None if C.BGP_COMMUNITY_MAP.get(community) is None else C.BGP_COMMUNITY_MAP.get(community)}
             for community in db.bgp.distinct('communities') if community is not None])
 
@@ -212,7 +213,7 @@ def get_ip(ip):
             network = find_network(ip, netmask=32)
         elif ipaddress.ip_address(ip).version == 6:
             network = find_network(ip, netmask=128)
-    except:
+    except Exception:
         try:
             ipadr = unicode(dns_query(ip).strip())
             if ipaddress.ip_address(ipadr).version == 4:
@@ -221,17 +222,30 @@ def get_ip(ip):
                 network = find_network(ipadr, netmask=128)
         except Exception as e:
             return(jsonify(str(e)))
-    return jsonify({'origin_as': network['origin_as'],
-                    'nexthop': network['nexthop'],
-                    'as_path': network['as_path'],
-                    'prefix': network['prefix'],
-                    'next_hop_asn': network['next_hop_asn'],
-                    'updated': epoch_to_date(network['timestamp']),
-                    'name': asn_name_query(network['origin_as']),
-                    'med': network['med'],
-                    'local_pref': network['local_pref'],
-                    'is_transit': is_transit(network),
-                    'communities': network['communities']})
+    if network:
+        return jsonify({'prefix': network['_id'],
+                        'origin_asn': network['origin_asn'],
+                        'name': asn_name_query(network['origin_asn']),
+                        'nexthop': network['nexthop'],
+                        'nexthop_asn': network['nexthop_asn'],
+                        'as_path': network['as_path'],
+                        'med': network['med'],
+                        'local_pref': network['local_pref'],
+                        'is_transit': is_transit(network),
+                        'communities': network['communities'],
+                        'ip_version': network['ip_version'],
+                        'route_origin': network['route_origin'],
+                        'atomic_aggregate': network['atomic_aggregate'],
+                        'aggregator_as': network['aggregator_as'],
+                        'aggregator_address': network['aggregator_address'],
+                        'originator_id': network['originator_id'],
+                        'cluster_list': network['cluster_list'],
+                        'withdrawal': network['withdrawal'],
+                        'active': network['active'],
+                        'updated': network['age'],
+                        'history': network['history']})
+    else:
+        return jsonify({})
 
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>', methods=['GET'])
@@ -240,20 +254,21 @@ def get_asn_prefixes(asn):
     prefixes = []
 
     if asn == C.DEFAULT_ASN:
-        routes = db.bgp.find({'origin_as': None})
+        routes = db.bgp.find({'origin_asn': None, 'active': True})
     else:
-        routes = db.bgp.find({'origin_as': asn})
+        routes = db.bgp.find({'origin_asn': asn, 'active': True})
 
     for prefix in routes:
-        prefixes.append({'prefix': prefix['prefix'],
-                         'origin_as': prefix['origin_as'],
+        prefixes.append({'prefix': prefix['_id'],
+                         'is_transit': is_transit(prefix),
+                         'origin_asn': prefix['origin_asn'],
+                         'name': asn_name_query(asn),
                          'nexthop_ip': prefix['nexthop'],
                          'nexthop_ip_dns': reverse_dns_query(prefix['nexthop']),
-                         'nexthop_asn': prefix['next_hop_asn'],
+                         'nexthop_asn': prefix['nexthop_asn'],
                          'as_path': prefix['as_path'],
-                         'updated': epoch_to_date(prefix['timestamp']),
-                         'is_transit': is_transit(prefix),
-                         'name': asn_name_query(asn)})
+                         'updated': prefix['age']
+                         })
 
     return jsonify({'asn': asn,
                     'name': asn_name_query(asn),
@@ -270,13 +285,13 @@ def get_stats():
 @app.route('/bgp/api/v1.0/asn/<int:asn>/transit', methods=['GET'])
 def get_transit_prefixes(asn):
     db = db_connect()
-    all_asns = db.bgp.find({})
+    all_asns = db.bgp.find({'active': True})
     prefixes = []
 
     for prefix in all_asns:
         if prefix['as_path']:
             if asn in prefix['as_path']:
-                prefixes.append(prefix['prefix'])
+                prefixes.append(prefix['_id'])
             else:
                 pass
         else:
