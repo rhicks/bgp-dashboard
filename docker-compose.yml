@@ -12,6 +12,8 @@ services:
     image: mongo:latest
     expose:
       - 27017
+    volumes:
+      - ./db:/data/db
 
   flask:
     build: ./flask
