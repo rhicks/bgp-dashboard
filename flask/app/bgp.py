@@ -7,44 +7,15 @@ from itertools import islice
 from collections import Counter
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
+import constants as C
 
-_DEFAULT_ASN = 3701
-_CUSTOMER_BGP_COMMUNITY = '3701:370'
-_TRANSIT_BGP_COMMUNITY = '3701:380'
-_PEER_BGP_COMMUNITY = '3701:39.'
-_BGP_COMMUNITY_MAP = {
-      '3701:111': 'Level3-Prepend-1',
-      '3701:112': 'Level3-Prepend-2',
-      '3701:113': 'Level3-SEAT-Depref',
-      '3701:114': 'Level3-WSAC-Depref',
-      '3701:121': 'Level3-WSAC-Prepend-1',
-      '3701:122': 'Level3-WSAC-Prepend-2',
-      '3701:370': 'Customers',
-      '3701:371': 'Customers-NO-I2-RE',
-      '3701:372': 'Customers-NO-I2-CP',
-      '3701:380': 'Transit',
-      '3701:381': 'Level3-SEAT',
-      '3701:382': 'Level3-WSAC',
-      '3701:390': 'OIX',
-      '3701:391': 'I2-RE',
-      '3701:392': 'NWAX',
-      '3701:393': 'PNWGP',
-      '3701:394': 'I2-CPS',
-      '3701:395': 'SeattleIX',
-      '3701:500': 'PT-ODE-USERS',
-      '3701:501': 'PT-ODE-PROVIDERS',
-      '3701:666': 'BH-LOCAL',
-      '64496:0': 'Cymru-UTRS',
-      '65333:888': 'Cymru-BOGONs',
-      '65535:65281': 'No-Export',
-}
 
 app = Flask(__name__)
 
 
 def db_connect():
     """Return a connection to the Mongo Database."""
-    client = MongoClient(host='mongo')
+    client = MongoClient(host='mongodb')
     return(client.bgp)
 
 
@@ -60,7 +31,7 @@ def find_network(ip, netmask):
     try:
         db = db_connect()
         network = str(ipaddress.ip_network(ipaddress.ip_address(ip)).supernet(new_prefix=netmask))
-        result = db.bgp.find_one({'prefix': network})
+        result = db.bgp.find_one({'_id': network})
         if result is not None:
             return(result)
         elif netmask == 0:
@@ -74,7 +45,7 @@ def find_network(ip, netmask):
 def asn_name_query(asn):
     """Given an *asn*, return the name."""
     if asn is None:
-        asn = _DEFAULT_ASN
+        asn = C.DEFAULT_ASN
     if 64496 <= asn <= 64511:
         return('RFC5398 - Private Use ASN')
     if 64512 <= asn <= 65535 or 4200000000 <= asn <= 4294967295:
@@ -98,9 +69,9 @@ def is_peer(asn):
         return False
 
 
-def is_transit(prefix, transit_bgp_community=_TRANSIT_BGP_COMMUNITY):
+def is_transit(prefix, transit_bgp_community=C.TRANSIT_BGP_COMMUNITY):
     """Is the *prefix* counted as transit?"""
-    if _TRANSIT_BGP_COMMUNITY in prefix['communities']:
+    if C.TRANSIT_BGP_COMMUNITY in prefix['communities']:
         return True
     else:
         return False
@@ -175,7 +146,7 @@ def top_peers(count):
             for asn in take(count, sorted(peers.items(), key=lambda x: x[1], reverse=True))])
 
 
-def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY):
+def get_list_of(customers=False, peers=False, community=C.CUSTOMER_BGP_COMMUNITY):
     """Return a list of prefix dictionaries.  Specify which type of prefix to
     return by setting *customers* or *peers* to True."""
     db = db_connect()
@@ -183,7 +154,7 @@ def get_list_of(customers=False, peers=False, community=_CUSTOMER_BGP_COMMUNITY)
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find()}
     else:
         query_results = {prefix['next_hop_asn'] for prefix in db.bgp.find({'communities': community})}
-    return([{'asn': asn if asn is not None else _DEFAULT_ASN,  # Set "None" ASNs to default
+    return([{'asn': asn if asn is not None else C.DEFAULT_ASN,  # Set "None" ASNs to default
              'name': asn_name_query(asn),
              'ipv4_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 4}).count(),
              'ipv6_count': db.bgp.find({'next_hop_asn': asn, 'ip_version': 6}).count()}
@@ -215,23 +186,23 @@ def communities_count():
     db = db_connect()
     return([{'community': community,
              'count': db.bgp.find({'communities': {'$regex': str(community)}}).count(),
-             'name': None if _BGP_COMMUNITY_MAP.get(community) is None else _BGP_COMMUNITY_MAP.get(community)}
+             'name': None if C.BGP_COMMUNITY_MAP.get(community) is None else C.BGP_COMMUNITY_MAP.get(community)}
             for community in db.bgp.distinct('communities') if community is not None])
 
 
 @app.route('/', methods=['GET'])
-def hello_index():
+def bgp_index():
     data = myStats.get_data()
     top_peers = data['top_n_peers']
     cidr_breakdown = data['cidr_breakdown']
     communities = data['communities']
     peers = data['peers']
-    source_asn = _DEFAULT_ASN
-    source_asn_name = asn_name_query(_DEFAULT_ASN)
-    customer_bgp_community = _CUSTOMER_BGP_COMMUNITY
-    transit_bgp_community = _TRANSIT_BGP_COMMUNITY
-    peer_bgp_community = _PEER_BGP_COMMUNITY
-    return render_template('hello.html', **locals())
+    source_asn = C.DEFAULT_ASN
+    source_asn_name = asn_name_query(C.DEFAULT_ASN)
+    customer_bgp_community = C.CUSTOMER_BGP_COMMUNITY
+    transit_bgp_community = C.TRANSIT_BGP_COMMUNITY
+    peer_bgp_community = C.PEER_BGP_COMMUNITY
+    return render_template('bgp.html', **locals())
 
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
@@ -248,7 +219,7 @@ def get_ip(ip):
                 network = find_network(ipadr, netmask=32)
             elif ipaddress.ip_address(ipadr).version == 6:
                 network = find_network(ipadr, netmask=128)
-        except Exception, e:
+        except Exception as e:
             return(jsonify(str(e)))
     return jsonify({'origin_as': network['origin_as'],
                     'nexthop': network['nexthop'],
@@ -268,7 +239,7 @@ def get_asn_prefixes(asn):
     db = db_connect()
     prefixes = []
 
-    if asn == _DEFAULT_ASN:
+    if asn == C.DEFAULT_ASN:
         routes = db.bgp.find({'origin_as': None})
     else:
         routes = db.bgp.find({'origin_as': asn})
