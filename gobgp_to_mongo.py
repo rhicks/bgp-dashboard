@@ -15,7 +15,9 @@ def db_connect(host='mongodb'):
 
 
 def initialize_database(db):
-    """If the db contains any entries set them all to 'active': False"""
+    """Create indxes, and if the db contains any entries set them all to 'active': False"""
+    db.bgp.create_index("nexthop_asn")
+    db.bgp.create_index("origin_asn")
     db.bgp.update_many(
         {"active": True},  # Search for
         {"$set": {"active": False}})  # Replace with
@@ -142,7 +144,7 @@ def update_prefix(prefix_from_gobgp, prefix_from_database):
 
 
 def main():
-    db = db_connect('localhost')
+    db = db_connect()
     initialize_database(db)
     for line in sys.stdin:
         prefix_from_gobgp = build_json(get_update_entry(line))
