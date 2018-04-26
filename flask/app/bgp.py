@@ -215,7 +215,7 @@ def get_ip(ip):
             network = find_network(ip, netmask=128)
     except Exception:
         try:
-            ipadr = unicode(dns_query(ip).strip())
+            ipadr = dns_query(ip).strip()
             if ipaddress.ip_address(ipadr).version == 4:
                 network = find_network(ipadr, netmask=32)
             elif ipaddress.ip_address(ipadr).version == 6:

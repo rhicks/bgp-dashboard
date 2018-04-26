@@ -125,7 +125,7 @@ def build_json(update_entry):
         update_json['withdrawal'] = update_entry['withdrawal']
         update_json['active'] = False
     if 'age' in update_entry:
-        update_json['age'] = datetime.fromtimestamp(update_entry['age']).strftime('%Y-%m-%d %H:%M:%S')
+        update_json['age'] = datetime.fromtimestamp(update_entry['age']).strftime('%Y-%m-%d %H:%M:%S ') + 'UTC'
 
     return update_json
 
