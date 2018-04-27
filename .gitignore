@@ -1,0 +1,8 @@
+**.pyc
+**/log
+!/log/sample_data.log
+**/__pycache__
+**/.ropeproject
+/db
+!.gitkeep
+**/venv
