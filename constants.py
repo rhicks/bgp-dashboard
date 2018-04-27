@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # DEFAULTS - UPDATE ACCORDINGLY
 DEFAULT_ASN = 3701
-MAX_PREFIX_HISTORY = None  # None = unlimited
+MAX_PREFIX_HISTORY = 100  # None = unlimited (BGP flapping will likely kill DB if unlimited)
 CUSTOMER_BGP_COMMUNITY = '3701:370'  # Prefixes learned from directly connected customers
 TRANSIT_BGP_COMMUNITY = '3701:380'  # Prefixes learned from *paid* transit providers
 PEER_BGP_COMMUNITY = '3701:39.'  # Prefixes learned from bilateral peers and exchanges
