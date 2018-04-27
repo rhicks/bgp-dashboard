@@ -191,6 +191,49 @@ def communities_count():
             for community in db.bgp.distinct('communities') if community is not None])
 
 
+def get_ip_json(ip, include_history=True):
+    try:
+        if ipaddress.ip_address(ip).version == 4:
+            network = find_network(ip, netmask=32)
+        elif ipaddress.ip_address(ip).version == 6:
+            network = find_network(ip, netmask=128)
+    except Exception:
+        try:
+            ipadr = dns_query(ip).strip()
+            if ipaddress.ip_address(ipadr).version == 4:
+                network = find_network(ipadr, netmask=32)
+            elif ipaddress.ip_address(ipadr).version == 6:
+                network = find_network(ipadr, netmask=128)
+        except Exception as e:
+            return(jsonify(str(e)))
+    if network:
+        if include_history:
+            history = network['history']
+        else:
+            history = request.base_url + '/history'
+        return {'prefix': network['_id'],
+                'ip_version': network['ip_version'],
+                'is_transit': is_transit(network),
+                'origin_asn': network['origin_asn'],
+                'name': asn_name_query(network['origin_asn']),
+                'nexthop': network['nexthop'],
+                'nexthop_asn': network['nexthop_asn'],
+                'as_path': network['as_path'],
+                'med': network['med'],
+                'local_pref': network['local_pref'],
+                'communities': network['communities'],
+                'route_origin': network['route_origin'],
+                'atomic_aggregate': network['atomic_aggregate'],
+                'aggregator_as': network['aggregator_as'],
+                'aggregator_address': network['aggregator_address'],
+                'originator_id': network['originator_id'],
+                'cluster_list': network['cluster_list'],
+                'age': network['age'],
+                'history': history}
+    else:
+        return {}
+
+
 @app.route('/', methods=['GET'])
 def bgp_index():
     data = myStats.get_data()
@@ -208,82 +251,12 @@ def bgp_index():
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
-    try:
-        if ipaddress.ip_address(ip).version == 4:
-            network = find_network(ip, netmask=32)
-        elif ipaddress.ip_address(ip).version == 6:
-            network = find_network(ip, netmask=128)
-    except Exception:
-        try:
-            ipadr = dns_query(ip).strip()
-            if ipaddress.ip_address(ipadr).version == 4:
-                network = find_network(ipadr, netmask=32)
-            elif ipaddress.ip_address(ipadr).version == 6:
-                network = find_network(ipadr, netmask=128)
-        except Exception as e:
-            return(jsonify(str(e)))
-    if network:
-        return jsonify({'prefix': network['_id'],
-                        'ip_version': network['ip_version'],
-                        'is_transit': is_transit(network),
-                        'origin_asn': network['origin_asn'],
-                        'name': asn_name_query(network['origin_asn']),
-                        'nexthop': network['nexthop'],
-                        'nexthop_asn': network['nexthop_asn'],
-                        'as_path': network['as_path'],
-                        'med': network['med'],
-                        'local_pref': network['local_pref'],
-                        'communities': network['communities'],
-                        'route_origin': network['route_origin'],
-                        'atomic_aggregate': network['atomic_aggregate'],
-                        'aggregator_as': network['aggregator_as'],
-                        'aggregator_address': network['aggregator_address'],
-                        'originator_id': network['originator_id'],
-                        'cluster_list': network['cluster_list'],
-                        'age': network['age'],
-                        'history': request.base_url + '/history'})
-    else:
-        return jsonify({})
+    return jsonify(get_ip_json(ip, include_history=False))
 
 
 @app.route('/bgp/api/v1.0/ip/<ip>/history', methods=['GET'])
 def get_history(ip):
-    try:
-        if ipaddress.ip_address(ip).version == 4:
-            network = find_network(ip, netmask=32)
-        elif ipaddress.ip_address(ip).version == 6:
-            network = find_network(ip, netmask=128)
-    except Exception:
-        try:
-            ipadr = dns_query(ip).strip()
-            if ipaddress.ip_address(ipadr).version == 4:
-                network = find_network(ipadr, netmask=32)
-            elif ipaddress.ip_address(ipadr).version == 6:
-                network = find_network(ipadr, netmask=128)
-        except Exception as e:
-            return(jsonify(str(e)))
-    if network:
-        return jsonify({'prefix': network['_id'],
-                        'ip_version': network['ip_version'],
-                        'is_transit': is_transit(network),
-                        'origin_asn': network['origin_asn'],
-                        'name': asn_name_query(network['origin_asn']),
-                        'nexthop': network['nexthop'],
-                        'nexthop_asn': network['nexthop_asn'],
-                        'as_path': network['as_path'],
-                        'med': network['med'],
-                        'local_pref': network['local_pref'],
-                        'communities': network['communities'],
-                        'route_origin': network['route_origin'],
-                        'atomic_aggregate': network['atomic_aggregate'],
-                        'aggregator_as': network['aggregator_as'],
-                        'aggregator_address': network['aggregator_address'],
-                        'originator_id': network['originator_id'],
-                        'cluster_list': network['cluster_list'],
-                        'age': network['age'],
-                        'history': network['history']})
-    else:
-        return jsonify({})
+    return jsonify(get_ip_json(ip, include_history=True))
 
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>', methods=['GET'])
