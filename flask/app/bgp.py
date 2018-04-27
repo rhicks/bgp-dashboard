@@ -290,7 +290,7 @@ def get_asn_prefixes(asn):
 
 @app.route('/bgp/api/v1.0/stats', methods=['GET'])
 def get_stats():
-    return myStats.get_json()
+    return myStats.get_data(json=True)
 
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/transit', methods=['GET'])
@@ -331,37 +331,26 @@ class Stats(object):
         self.customer_ipv6_prefixes = 0
         self.timestamp = epoch_to_date(time.time())
 
-    def get_json(self):
-        return jsonify({'peer_count': self.peer_counter,
-                        'ipv4_table_size': self.ipv4_table_size,
-                        'ipv6_table_size': self.ipv6_table_size,
-                        'nexthop_ip_count': self.nexthop_ip_counter,
-                        'avg_as_path_length': self.avg_as_path_length,
-                        'top_n_peers': self.top_n_peers,
-                        'cidr_breakdown': self.cidr_breakdown,
-                        'communities': self.communities,
-                        'peers': self.peers,
-                        'customers': self.customers,
-                        'customer_count': self.customer_count,
-                        'customer_ipv4_prefixes': self.customer_ipv4_prefixes,
-                        'customer_ipv6_prefixes': self.customer_ipv6_prefixes,
-                        'timestamp': self.timestamp})
-
-    def get_data(self):
-        return ({'peer_count': self.peer_counter,
-                 'ipv6_table_size': self.ipv6_table_size,
-                 'ipv4_table_size': self.ipv4_table_size,
-                 'nexthop_ip_count': self.nexthop_ip_counter,
-                 'avg_as_path_length': self.avg_as_path_length,
-                 'top_n_peers': self.top_n_peers,
-                 'cidr_breakdown': self.cidr_breakdown,
-                 'communities': self.communities,
-                 'peers': self.peers,
-                 'customers': self.customers,
-                 'customer_count': self.customer_count,
-                 'customer_ipv4_prefixes': self.customer_ipv4_prefixes,
-                 'customer_ipv6_prefixes': self.customer_ipv6_prefixes,
-                 'timestamp': self.timestamp})
+    def get_data(self, json=False):
+        data_dict = {
+            'peer_count': self.peer_counter,
+            'ipv6_table_size': self.ipv6_table_size,
+            'ipv4_table_size': self.ipv4_table_size,
+            'nexthop_ip_count': self.nexthop_ip_counter,
+            'avg_as_path_length': self.avg_as_path_length,
+            'top_n_peers': self.top_n_peers,
+            'cidr_breakdown': self.cidr_breakdown,
+            'communities': self.communities,
+            'peers': self.peers,
+            'customers': self.customers,
+            'customer_count': self.customer_count,
+            'customer_ipv4_prefixes': self.customer_ipv4_prefixes,
+            'customer_ipv6_prefixes': self.customer_ipv6_prefixes,
+            'timestamp': self.timestamp}
+        if json:
+            return jsonify(data_dict)
+        else:
+            return data_dict
 
     def update_stats(self):
         self.peer_counter = peer_count()
