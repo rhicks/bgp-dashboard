@@ -153,12 +153,15 @@ def get_list_of(customers=False, peers=False, community=C.CUSTOMER_BGP_COMMUNITY
     db = db_connect()
     if peers:
         query_results = {prefix['nexthop_asn'] for prefix in db.bgp.find({'active': True})}
-    else:
+    if customers:
         query_results = {prefix['nexthop_asn'] for prefix in db.bgp.find({'communities': community, 'active': True})}
     return([{'asn': asn if asn is not None else C.DEFAULT_ASN,  # Set "None" ASNs to default
              'name': asn_name_query(asn),
-             'ipv4_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 4, 'active': True}).count(),
-             'ipv6_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 6, 'active': True}).count()}
+             'ipv4_origin_count': db.bgp.find({'origin_asn': asn, 'ip_version': 4, 'active': True}).count(),
+             'ipv6_origin_count': db.bgp.find({'origin_asn': asn, 'ip_version': 6, 'active': True}).count(),
+             'ipv4_nexthop_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 4, 'active': True}).count(),
+             'ipv6_nexthop_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 6, 'active': True}).count(),
+             'asn_count':  len(db.bgp.distinct('as_path.1', {'nexthop_asn': asn}))}
             for asn in query_results])
 
 
@@ -363,8 +366,8 @@ class Stats(object):
         self.customer_ipv4_prefixes = 0
         self.customer_ipv6_prefixes = 0
         for customer in customers:
-            self.customer_ipv4_prefixes += customer['ipv4_count']
-            self.customer_ipv6_prefixes += customer['ipv6_count']
+            self.customer_ipv4_prefixes += customer['ipv4_origin_count']
+            self.customer_ipv6_prefixes += customer['ipv6_origin_count']
 
     def update_advanced_stats(self):
         self.avg_as_path_length = avg_as_path_length()
