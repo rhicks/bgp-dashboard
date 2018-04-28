@@ -2,11 +2,17 @@
 
 import sys
 import json
-import constants as C
+import bgp_attributes as BGP
 from pymongo import MongoClient
 from copy import copy
 from datetime import datetime
 import ipaddress
+import logging
+# logging.basicConfig(level=logging.CRITICAL)
+# logging.basicConfig(level=logging.DEBUG)
+
+# DEFAULTS - UPDATE ACCORDINGLY
+MAX_PREFIX_HISTORY = 100  # None = unlimited (BGP flapping will likely kill DB if unlimited)
 
 
 def db_connect(host='mongodb'):
@@ -34,7 +40,7 @@ def get_update_entry(line):
             else:
                 return(update_entry)
     except Exception as err:
-        C.logging.error("Error in get_update_entry(line):", err)
+        logging.error("Error in get_update_entry(line):", err)
         return None
 
 
@@ -59,7 +65,7 @@ def build_json(update_entry):
     update_json = {  # set defaults
         '_id': update_entry['nlri']['prefix'],
         'ip_version': ipaddress.ip_address(update_entry['nlri']['prefix'].split('/', 1)[0]).version,
-        'origin_asn': C.DEFAULT_ASN,
+        'origin_asn': None,
         'nexthop': None,
         'nexthop_asn': None,
         'as_path': [],
@@ -78,49 +84,49 @@ def build_json(update_entry):
         'history': []
     }
     for attribute in update_entry['attrs']:
-        if attribute['type'] == C.ORIGIN:
-            update_json['route_origin'] = C.ORIGIN_CODE[attribute['value']]
-        if attribute['type'] == C.AS_PATH:
+        if attribute['type'] == BGP.ORIGIN:
+            update_json['route_origin'] = BGP.ORIGIN_CODE[attribute['value']]
+        if attribute['type'] == BGP.AS_PATH:
             try:
                 update_json['as_path'] = attribute['as_paths'][0]['asns']
                 update_json['nexthop_asn'] = update_json['as_path'][0]
                 update_json['origin_asn'] = update_json['as_path'][-1]
             except Exception:
-                C.logging.debug(f'Error processing as_path: {attribute}')
-                C.logging.debug(f'Error processing as_path: {update_json["_id"]}')
-        if attribute['type'] == C.NEXT_HOP:
+                logging.debug(f'Error processing as_path: {attribute}')
+                logging.debug(f'Error processing as_path: {update_json["_id"]}')
+        if attribute['type'] == BGP.NEXT_HOP:
             update_json['nexthop'] = attribute['nexthop']
-        if attribute['type'] == C.MULTI_EXIT_DISC:
+        if attribute['type'] == BGP.MULTI_EXIT_DISC:
             try:
                 update_json['med'] = attribute['metric']
             except Exception:
-                C.logging.debug(f'Error processing med: {attribute}')
-        if attribute['type'] == C.LOCAL_PREF:
+                logging.debug(f'Error processing med: {attribute}')
+        if attribute['type'] == BGP.LOCAL_PREF:
             try:
                 update_json['local_pref'] = attribute['value']
             except Exception:
-                C.logging.debug(f'Error processing local_pref: {attribute}')
-        if attribute['type'] == C.ATOMIC_AGGREGATE:
+                logging.debug(f'Error processing local_pref: {attribute}')
+        if attribute['type'] == BGP.ATOMIC_AGGREGATE:
             update_json['atomic_aggregate'] = True
-        if attribute['type'] == C.AGGREGATOR:
+        if attribute['type'] == BGP.AGGREGATOR:
             update_json['aggregator_as'] = attribute['as']
             update_json['aggregator_address'] = attribute['address']
-        if attribute['type'] == C.COMMUNITY:
+        if attribute['type'] == BGP.COMMUNITY:
             try:
                 for number in attribute['communities']:
                     update_json['communities'].append(community_32bit_to_string(number))
             except Exception:
-                C.logging.debug(f'Error processing communities: {attribute}')
-        if attribute['type'] == C.ORIGINATOR_ID:
+                logging.debug(f'Error processing communities: {attribute}')
+        if attribute['type'] == BGP.ORIGINATOR_ID:
             update_json['originator_id'] = attribute['value']
-        if attribute['type'] == C.CLUSTER_LIST:
+        if attribute['type'] == BGP.CLUSTER_LIST:
             update_json['cluster_list'] = attribute['value']
-        if attribute['type'] == C.MP_REACH_NLRI:
+        if attribute['type'] == BGP.MP_REACH_NLRI:
             update_json['nexthop'] = attribute['nexthop']
-        if attribute['type'] == C.MP_UNREACH_NLRI:
-            C.logging.debug(f'Found MP_UNREACH_NLRI: {attribute}')
-        if attribute['type'] == C.EXTENDED_COMMUNITIES:
-            C.logging.debug(f'Found EXTENDED_COMMUNITIES: {attribute}')
+        if attribute['type'] == BGP.MP_UNREACH_NLRI:
+            logging.debug(f'Found MP_UNREACH_NLRI: {attribute}')
+        if attribute['type'] == BGP.EXTENDED_COMMUNITIES:
+            logging.debug(f'Found EXTENDED_COMMUNITIES: {attribute}')
     if 'withdrawal' in update_entry:
         update_json['withdrawal'] = update_entry['withdrawal']
         update_json['active'] = False
@@ -141,7 +147,7 @@ def update_prefix(prefix_from_gobgp, prefix_from_database):
             prefix_from_gobgp['history'].append(prefix_from_database)
         else:  # existing history: append to history list
             history_list.insert(0, prefix_from_database)  # insert on top of list, index 0
-            prefix_from_gobgp['history'] = history_list[:C.MAX_PREFIX_HISTORY]  # trim the history list if MAX is set
+            prefix_from_gobgp['history'] = history_list[:MAX_PREFIX_HISTORY]  # trim the history list if MAX is set
     return prefix_from_gobgp
 
 
