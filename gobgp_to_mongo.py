@@ -4,6 +4,7 @@ import sys
 import json
 import bgp_attributes as BGP
 from pymongo import MongoClient
+import pymongo
 from copy import copy
 from datetime import datetime
 import ipaddress
@@ -23,8 +24,12 @@ def db_connect(host='mongodb'):
 
 def initialize_database(db):
     """Create indxes, and if the db contains any entries set them all to 'active': False"""
-    db.bgp.create_index("nexthop_asn")
-    db.bgp.create_index("origin_asn")
+    # db.bgp.drop()
+    db.bgp.create_index([('nexthop', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('nexthop_asn', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('origin_asn', pymongo.ASCENDING), ('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('communities', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.update_many(
         {"active": True},  # Search for
         {"$set": {"active": False}})  # Replace with
