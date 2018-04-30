@@ -3,11 +3,13 @@ import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 import constants as C
 from Stats import Stats
-from functions import asn_name_query, get_ip_json, db_connect, is_transit, is_peer, reverse_dns_query
+from functions import asn_name_query, get_ip_json, db_connect, get_list_of
+from functions import is_transit, is_peer, reverse_dns_query
 
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 
 @app.route('/', methods=['GET'])
@@ -23,6 +25,16 @@ def bgp_index():
     transit_bgp_community = C.TRANSIT_BGP_COMMUNITY
     peer_bgp_community = C.PEER_BGP_COMMUNITY
     return render_template('bgp.html', **locals())
+
+
+@app.route('/bgp/api/v1.0/peers', methods=['GET'])
+def get_peers():
+    return(jsonify(get_list_of(peers=True)))
+
+
+@app.route('/bgp/api/v1.0/customers', methods=['GET'])
+def get_customers():
+    return(jsonify(get_list_of(customers=True)))
 
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
