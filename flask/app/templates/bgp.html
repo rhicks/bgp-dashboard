@@ -328,9 +328,14 @@
   <script>
     $(document).ready(function() {
       $('#datatable').dataTable(
-        {"oLanguage": {
+        {
+          "oLanguage":
+          {
           "sSearch": "Filter Table: "
-        }});
+        },
+          paging: false,
+          scrollY: 400
+        });
     });
   </script>
 
