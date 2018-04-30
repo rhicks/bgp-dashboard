@@ -4,7 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import constants as C
 from Stats import Stats
 from functions import asn_name_query, get_ip_json, db_connect, get_list_of
-from functions import is_transit, is_peer, reverse_dns_query
+from functions import is_transit, is_peer, reverse_dns_query, communities_count
 
 
 app = Flask(__name__)
@@ -40,6 +40,11 @@ def get_customers():
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
 def get_ip(ip):
     return jsonify(get_ip_json(ip, include_history=False))
+
+
+@app.route('/bgp/api/v1.0/communities', methods=['GET'])
+def get_communities():
+    return jsonify(communities_count())
 
 
 @app.route('/bgp/api/v1.0/ip/<ip>/history', methods=['GET'])
@@ -85,9 +90,14 @@ def get_stats():
 def get_downstream_asns(asn):
     db = db_connect()
     asn_list = []
+    large_query = 200
     downstream_asns = db.bgp.distinct('as_path.1', {'nexthop_asn': asn, 'active': True})
     for downstream in downstream_asns:
-        asn_list.append({'asn': downstream, 'name': asn_name_query(downstream)})
+        if len(downstream_asns) > large_query:
+            dns_name = "(LARGE QUERY - DNS LOOKUP DISABLED)"
+        else:
+            dns_name = asn_name_query(downstream)
+        asn_list.append({'asn': downstream, 'name': dns_name})
     return jsonify({'asn': asn,
                     'name': asn_name_query(asn),
                     'downstreams_asns_count': len(asn_list),
@@ -112,7 +122,7 @@ def get_originated_prefixes(asn):
 def get_nexthop_prefixes(asn):
     db = db_connect()
     nexthop = []
-    prefixes = db.bgp.find({'nexthop': asn, 'active': True})
+    prefixes = db.bgp.find({'nexthop_asn': asn, 'active': True})
     for prefix in prefixes:
         nexthop.append(prefix['_id'])
 
