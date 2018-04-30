@@ -95,7 +95,14 @@ def dns_query(name):
 def peer_count():
     """Return the number of directly connected ASNs."""
     db = db_connect()
-    return(len(db.bgp.distinct('nexthop_asn', {'active': True})))
+    peers_set = set()
+    all_prefixes = db.bgp.find({'active': True})
+    for prefix in all_prefixes:
+        try:
+            peers_set.add(prefix['nexthop_asn'])  # sets remove duplicate ASN prepending
+        except Exception:
+            pass
+    return len(peers_set)
 
 
 def prefix_count(version):
@@ -107,7 +114,14 @@ def prefix_count(version):
 def nexthop_ip_count():
     """Return the number of unique next hop IPv4 and IPv6 addresses."""
     db = db_connect()
-    return(len(db.bgp.distinct('nexthop', {'active': True})))
+    nexthop_ip_set = set()
+    all_prefixes = db.bgp.find({'active': True})  # , projection=['nexthop'])
+    for prefix in all_prefixes:
+        try:
+            nexthop_ip_set.add(prefix['nexthop'])  # sets remove duplicate ASN prepending
+        except Exception:
+            print(prefix)
+    return len(nexthop_ip_set)
 
 
 def epoch_to_date(epoch):
@@ -179,13 +193,13 @@ def cidr_breakdown():
             for mask, count in list(Counter(ipv6_masks).items())], key=lambda x: x['mask']))
 
 
-def communities_count():
-    """Return a list of BGP communities and their count"""
-    db = db_connect()
-    return([{'community': community,
-             'count': db.bgp.find({'communities': {'$regex': str(community)}, 'active': True}).count(),
-             'name': None if C.BGP_COMMUNITY_MAP.get(community) is None else C.BGP_COMMUNITY_MAP.get(community)}
-            for community in db.bgp.distinct('communities') if community is not None])
+# def communities_count():
+#     """Return a list of BGP communities and their count"""
+#     db = db_connect()
+#     return([{'community': community,
+#              'count': db.bgp.find({'communities': {'$regex': str(community)}, 'active': True}).count(),
+#              'name': None if C.BGP_COMMUNITY_MAP.get(community) is None else C.BGP_COMMUNITY_MAP.get(community)}
+#             for community in db.bgp.distinct('communities') if community is not None])
 
 
 def get_ip_json(ip, include_history=True):
