@@ -155,7 +155,7 @@ def get_list_of(customers=False, peers=False, community=C.CUSTOMER_BGP_COMMUNITY
              'ipv6_origin_count': db.bgp.find({'origin_asn': asn, 'ip_version': 6, 'active': True}).count(),
              'ipv4_nexthop_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 4, 'active': True}).count(),
              'ipv6_nexthop_count': db.bgp.find({'nexthop_asn': asn, 'ip_version': 6, 'active': True}).count(),
-             'asn_count':  len(db.bgp.distinct('as_path.1', {'nexthop_asn': asn}))}
+             'asn_count':  len(db.bgp.distinct('as_path.1', {'nexthop_asn': asn, 'active': True}))}
             for asn in query_results])
 
 

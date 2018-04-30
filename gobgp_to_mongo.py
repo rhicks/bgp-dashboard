@@ -30,6 +30,7 @@ def initialize_database(db):
     db.bgp.create_index([('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.create_index([('origin_asn', pymongo.ASCENDING), ('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.create_index([('communities', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('as_path.1', pymongo.ASCENDING), ('nexthop_asn', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.update_many(
         {"active": True},  # Search for
         {"$set": {"active": False}})  # Replace with

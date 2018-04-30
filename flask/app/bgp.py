@@ -81,6 +81,47 @@ def get_stats():
     return myStats.get_data(json=True)
 
 
+@app.route('/bgp/api/v1.0/asn/<int:asn>/downstream', methods=['GET'])
+def get_downstream_asns(asn):
+    db = db_connect()
+    asn_list = []
+    downstream_asns = db.bgp.distinct('as_path.1', {'nexthop_asn': asn, 'active': True})
+    for downstream in downstream_asns:
+        asn_list.append({'asn': downstream, 'name': asn_name_query(downstream)})
+    return jsonify({'asn': asn,
+                    'name': asn_name_query(asn),
+                    'downstreams_asns_count': len(asn_list),
+                    'downstreams_asns': asn_list})
+
+
+@app.route('/bgp/api/v1.0/asn/<int:asn>/originated', methods=['GET'])
+def get_originated_prefixes(asn):
+    db = db_connect()
+    originated = []
+    prefixes = db.bgp.find({'origin_asn': asn, 'active': True})
+    for prefix in prefixes:
+        originated.append(prefix['_id'])
+
+    return jsonify({'asn': asn,
+                    'name': asn_name_query(asn),
+                    'originated_prefix_count': len(originated),
+                    'originated_prefix_list': originated})
+
+
+@app.route('/bgp/api/v1.0/asn/<int:asn>/nexthop', methods=['GET'])
+def get_nexthop_prefixes(asn):
+    db = db_connect()
+    nexthop = []
+    prefixes = db.bgp.find({'nexthop': asn, 'active': True})
+    for prefix in prefixes:
+        nexthop.append(prefix['_id'])
+
+    return jsonify({'asn': asn,
+                    'name': asn_name_query(asn),
+                    'nexthop_prefix_count': len(nexthop),
+                    'nexthop_prefix_list': nexthop})
+
+
 @app.route('/bgp/api/v1.0/asn/<int:asn>/transit', methods=['GET'])
 def get_transit_prefixes(asn):
     db = db_connect()

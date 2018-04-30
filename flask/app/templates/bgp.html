@@ -183,11 +183,9 @@
                         <tr>
                           <th>ASN</th>
                           <th>Name</th>
-                          <th>IPv4 Originated</th>
-                          <th>IPv6 Originated</th>
-                          <th>IPv4 NextHop</th>
-                          <th>IPv6 NextHop</th>
-                          <th>Downstream ASN Count</th>
+                          <th>IPv4/IPv6 Prefixes<br>Originated</th>
+                          <th>IPv4/IPv6 Prefixes<br>NextHop</th>
+                          <th>Downstream<br>ASN Count</th>
                         </tr>
                       </thead>
 
@@ -197,11 +195,9 @@
                         <tr>
                           <td>{{ peer.asn }}</td>
                           <td>{{ peer.name }}</td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.ipv4_origin_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.ipv6_origin_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.ipv4_nexthop_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.ipv6_nexthop_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.asn_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/originated">{{ peer.ipv4_origin_count }}/{{ peer.ipv6_origin_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/nexthop">{{ peer.ipv4_nexthop_count }}/{{ peer.ipv6_nexthop_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/downstream">{{ peer.asn_count }}</a></td>
                         </tr>
                         {% endfor %}
                       </tbody>
