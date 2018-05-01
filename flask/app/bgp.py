@@ -5,6 +5,7 @@ import constants as C
 from Stats import Stats
 from functions import asn_name_query, get_ip_json, db_connect, get_list_of
 from functions import is_transit, is_peer, reverse_dns_query, communities_count
+import collections
 
 
 app = Flask(__name__)
@@ -98,10 +99,13 @@ def get_downstream_asns(asn):
         else:
             dns_name = asn_name_query(downstream)
         asn_list.append({'asn': downstream, 'name': dns_name})
+
+    sorted_asn_list = sorted(asn_list, key=lambda k: k['asn'])
+
     return jsonify({'asn': asn,
                     'name': asn_name_query(asn),
                     'downstreams_asns_count': len(asn_list),
-                    'downstreams_asns': asn_list})
+                    'downstreams_asns': sorted_asn_list})
 
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/originated', methods=['GET'])
