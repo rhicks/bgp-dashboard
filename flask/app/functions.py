@@ -189,6 +189,8 @@ def communities_count():
 
 
 def get_ip_json(ip, include_history=True):
+    if '/' in ip:
+        ip = ip.lstrip().rstrip().split('/')[0]
     try:
         if ipaddress.ip_address(ip).version == 4:
             network = find_network(ip, netmask=32)
