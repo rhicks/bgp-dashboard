@@ -183,8 +183,10 @@
                         <tr>
                           <th>ASN</th>
                           <th>Name</th>
-                          <th>IPv4/IPv6 Prefixes<br>Originated</th>
-                          <th>IPv4/IPv6 Prefixes<br>NextHop</th>
+                          <th>IPv4 Prefixes<br>Originated</th>
+                          <th>IPv4 Prefixes<br>NextHop</th>
+                          <th>IPv6 Prefixes<br>Originated</th>
+                          <th>IPv6 Prefixes<br>NextHop</th>
                           <th>Downstream<br>ASN Count</th>
                         </tr>
                       </thead>
@@ -193,10 +195,12 @@
                       <tbody>
                         {% for peer in peers %}
                         <tr>
-                          <td>{{ peer.asn }}</td>
-                          <td>{{ peer.name }}</td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/originated">{{ peer.ipv4_origin_count }}/{{ peer.ipv6_origin_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/nexthop">{{ peer.ipv4_nexthop_count }}/{{ peer.ipv6_nexthop_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.asn }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.name }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/originated/ipv4">{{ peer.ipv4_origin_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/nexthop/ipv4">{{ peer.ipv4_nexthop_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/originated/ipv6">{{ peer.ipv6_origin_count }}</a></td>
+                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/nexthop/ipv6">{{ peer.ipv6_nexthop_count }}</a></td>
                           <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/downstream">{{ peer.asn_count }}</a></td>
                         </tr>
                         {% endfor %}
