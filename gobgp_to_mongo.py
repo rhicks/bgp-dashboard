@@ -61,6 +61,7 @@ def compare_prefixes(new, old):
 
 
 def community_32bit_to_string(number):
+    """Given a 32bit number, convert to standard bgp community format XXX:XX"""
     if number is not 0:
         return f'{int(bin(number)[:-16], 2)}:{int(bin(number)[-16:], 2)}'  # PEP 498
 

@@ -6,3 +6,4 @@
 /db
 !.gitkeep
 **/venv
+*.vscode
