@@ -25,6 +25,8 @@ def db_connect(host='mongodb'):
 def initialize_database(db):
     """Create indxes, and if the db contains any entries set them all to 'active': False"""
     # db.bgp.drop()
+    db.bgp.create_index('nexthop')
+    db.bgp.create_index('nexthop_asn')
     db.bgp.create_index([('nexthop', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.create_index([('nexthop_asn', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.create_index([('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
