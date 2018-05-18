@@ -190,21 +190,6 @@
                           <th>Downstream<br>ASN Count</th>
                         </tr>
                       </thead>
-
-
-                      <tbody>
-                        {% for peer in peers %}
-                        <tr>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.asn }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">{{ peer.name }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/originated/ipv4">{{ peer.ipv4_origin_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/nexthop/ipv4">{{ peer.ipv4_nexthop_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/originated/ipv6">{{ peer.ipv6_origin_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/nexthop/ipv6">{{ peer.ipv6_nexthop_count }}</a></td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}/downstream">{{ peer.asn_count }}</a></td>
-                        </tr>
-                        {% endfor %}
-                      </tbody>
                     </table>
                       </div>
                     </div>
@@ -329,19 +314,6 @@
 
     <!-- Custom Theme Scripts -->
     <!-- <script src="../static/js/custom.min.js"></script> -->
-  <script>
-    $(document).ready(function() {
-      $('#datatable').dataTable(
-        {
-          "oLanguage":
-          {
-          "sSearch": "Filter Table: "
-        },
-          paging: false,
-          scrollY: 400
-        });
-    });
-  </script>
 
   <script>
   function up_or_down_checker(css_tag, data, json_tag)
@@ -385,6 +357,7 @@
     }
   }
 
+  var stats = jQuery.getJSON("/bgp/api/v1.0/stats")
   var peer_count_sparkline_data = [];
   var ipv4_table_sparkline_data = [];
   var ipv6_table_sparkline_data = [];
@@ -393,6 +366,29 @@
   var customer_count_data = [];
   var customer_ipv4_prefix_data = [];
   var customer_ipv6_prefix_data = [];
+
+  var peers_table = jQuery('#datatable').DataTable({
+        ajax: {
+          url: "/bgp/api/v1.0/stats",
+          dataSrc: "peers"
+      },
+      columns: [
+          { data: "asn", render: function (asn) {return '<a href=/bgp/api/v1.0/asn/'+asn+'>'+asn+'</a>';} },
+          { data: "name" },
+          { data: "ipv4_origin_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/originated/ipv4>'+full.ipv4_origin_count+'</a>';} },
+          { data: "ipv4_nexthop_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/nexthop/ipv4>'+full.ipv4_nexthop_count+'</a>';} },
+          { data: "ipv6_origin_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/originated/ipv6>'+full.ipv6_origin_count+'</a>';} },
+          { data: "ipv6_nexthop_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/nexthop/ipv6>'+full.ipv6_nexthop_count+'</a>';} },
+          { data: "asn_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/downstream>'+full.asn_count+'</a>';} }
+      ],
+        "oLanguage":
+        {
+        "sSearch": "Filter Table: "
+      },
+        paging: false,
+        scrollY: 400
+      });
+
 
   function update_counters()
   {
@@ -454,6 +450,7 @@
         customer_ipv6_prefix_data.shift();
       }
       update_sparklines(data, 1)
+      peers_table.ajax.reload(null, false)
     });
   }
 

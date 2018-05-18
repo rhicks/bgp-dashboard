@@ -1,12 +1,12 @@
-from flask import Flask, jsonify, render_template
 import threading
-from apscheduler.schedulers.background import BackgroundScheduler
-import constants as C
-from Stats import Stats
-from functions import asn_name_query, get_ip_json, db_connect, get_list_of
-from functions import is_transit, is_peer, reverse_dns_query, communities_count
-import collections
 
+from flask import Flask, jsonify, render_template
+
+import constants as C
+from apscheduler.schedulers.background import BackgroundScheduler
+from functions import (asn_name_query, get_ip_json, is_peer, is_transit,
+                       reverse_dns_query)
+from Stats import Stats
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -30,12 +30,12 @@ def bgp_index():
 
 @app.route('/bgp/api/v1.0/peers', methods=['GET'])
 def get_peers():
-    return(jsonify(get_list_of(peers=True)))
+    return jsonify(myStats.get_list_of(peers=True))
 
 
 @app.route('/bgp/api/v1.0/customers', methods=['GET'])
 def get_customers():
-    return(jsonify(get_list_of(customers=True)))
+    return jsonify(myStats.get_list_of(customers=True))
 
 
 @app.route('/bgp/api/v1.0/ip/<ip>', methods=['GET'])
@@ -45,7 +45,7 @@ def get_ip(ip):
 
 @app.route('/bgp/api/v1.0/communities', methods=['GET'])
 def get_communities():
-    return jsonify(communities_count())
+    return jsonify(myStats.communities_count())
 
 
 @app.route('/bgp/api/v1.0/ip/<ip>/history', methods=['GET'])
@@ -55,7 +55,7 @@ def get_history(ip):
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>', methods=['GET'])
 def get_asn_prefixes(asn):
-    db = db_connect()
+    db = myStats.db
     prefixes = []
 
     if asn == C.DEFAULT_ASN:
@@ -89,7 +89,7 @@ def get_stats():
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/downstream', methods=['GET'])
 def get_downstream_asns(asn):
-    db = db_connect()
+    db = myStats.db
     asn_list = []
     large_query = 200
     downstream_asns = db.bgp.distinct('as_path.1', {'nexthop_asn': asn, 'active': True})
@@ -110,7 +110,7 @@ def get_downstream_asns(asn):
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/originated', methods=['GET'])
 def get_originated_prefixes(asn):
-    db = db_connect()
+    db = myStats.db
     originated = []
     prefixes = db.bgp.find({'origin_asn': asn, 'active': True})
     for prefix in prefixes:
@@ -124,7 +124,7 @@ def get_originated_prefixes(asn):
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/originated/<version>', methods=['GET'])
 def get_originated_prefixes_version(asn, version):
-    db = db_connect()
+    db = myStats.db
     originated = []
     v = 4
     if version.lower() == 'ipv6':
@@ -141,7 +141,7 @@ def get_originated_prefixes_version(asn, version):
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/nexthop', methods=['GET'])
 def get_nexthop_prefixes(asn):
-    db = db_connect()
+    db = myStats.db
     nexthop = []
     prefixes = db.bgp.find({'nexthop_asn': asn, 'active': True})
     for prefix in prefixes:
@@ -155,7 +155,7 @@ def get_nexthop_prefixes(asn):
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/nexthop/<version>', methods=['GET'])
 def get_nexthop_prefixes_version(asn, version):
-    db = db_connect()
+    db = myStats.db
     nexthop = []
     v = 4
     if version.lower() == 'ipv6':
@@ -172,7 +172,7 @@ def get_nexthop_prefixes_version(asn, version):
 
 @app.route('/bgp/api/v1.0/asn/<int:asn>/transit', methods=['GET'])
 def get_transit_prefixes(asn):
-    db = db_connect()
+    db = myStats.db
     all_asns = db.bgp.find({'active': True})
     prefixes = []
 
@@ -195,8 +195,8 @@ sched = BackgroundScheduler()
 myStats = Stats()
 threading.Thread(target=myStats.update_stats).start()
 threading.Thread(target=myStats.update_advanced_stats).start()
-sched.add_job(myStats.update_stats, 'interval', seconds=5)
-sched.add_job(myStats.update_advanced_stats, 'interval', seconds=90)
+sched.add_job(myStats.update_stats, 'interval', seconds=8)
+sched.add_job(myStats.update_advanced_stats, 'interval', seconds=30)
 sched.start()
 
 if __name__ == '__main__':
