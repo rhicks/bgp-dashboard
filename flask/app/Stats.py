@@ -149,6 +149,14 @@ class Stats(object):
         self.ipv6_table_size = self.prefix_count(6)
         self.nexthop_ip_counter = self.nexthop_ip_count()
         self.timestamp = self.epoch_to_date(time.time())
+
+
+    def update_advanced_stats(self):
+        self.avg_as_path_length = self.avg_as_path_len()
+        self.top_n_peers = self.top_peers(5)
+        self.cidr_breakdown = self.cidrs()
+        # self.customers = self.get_list_of(customers=True)
+        # self.communities = self.communities_count()
         self.customers = self.get_list_of(customers=True)
         self.peers = self.get_list_of(peers=True)
         self.customer_count = len(self.customers)
@@ -157,11 +165,4 @@ class Stats(object):
         for customer in self.customers:
             self.customer_ipv4_prefixes += customer['ipv4_origin_count']
             self.customer_ipv6_prefixes += customer['ipv6_origin_count']
-
-    def update_advanced_stats(self):
-        self.avg_as_path_length = self.avg_as_path_len()
-        self.top_n_peers = self.top_peers(5)
-        self.cidr_breakdown = self.cidrs()
-        # self.customers = self.get_list_of(customers=True)
-        # self.communities = self.communities_count()
         self.timestamp = self.epoch_to_date(time.time())

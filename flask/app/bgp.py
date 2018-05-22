@@ -195,8 +195,8 @@ sched = BackgroundScheduler()
 myStats = Stats()
 threading.Thread(target=myStats.update_stats).start()
 threading.Thread(target=myStats.update_advanced_stats).start()
-sched.add_job(myStats.update_stats, 'interval', seconds=8)
-sched.add_job(myStats.update_advanced_stats, 'interval', seconds=30)
+sched.add_job(myStats.update_stats, 'interval', seconds=5)
+sched.add_job(myStats.update_advanced_stats, 'interval', seconds=60)
 sched.start()
 
 if __name__ == '__main__':
