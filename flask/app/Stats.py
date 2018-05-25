@@ -156,7 +156,7 @@ class Stats(object):
         self.top_n_peers = self.top_peers(5)
         self.cidr_breakdown = self.cidrs()
         # self.customers = self.get_list_of(customers=True)
-        # self.communities = self.communities_count()
+        self.communities = self.communities_count()
         self.customers = self.get_list_of(customers=True)
         self.peers = self.get_list_of(peers=True)
         self.customer_count = len(self.customers)
