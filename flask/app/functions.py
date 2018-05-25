@@ -111,6 +111,7 @@ def get_ip_json(ip, include_history=True):
                 'origin_asn': network['origin_asn'],
                 'name': asn_name_query(network['origin_asn']),
                 'nexthop': network['nexthop'],
+                'nexthop_ip_dns': reverse_dns_query(network['nexthop']),
                 'nexthop_asn': network['nexthop_asn'],
                 'as_path': network['as_path'],
                 'med': network['med'],
@@ -121,6 +122,7 @@ def get_ip_json(ip, include_history=True):
                 'aggregator_as': network['aggregator_as'],
                 'aggregator_address': network['aggregator_address'],
                 'originator_id': network['originator_id'],
+                'originator_id_dns': reverse_dns_query(network['originator_id']),
                 'cluster_list': network['cluster_list'],
                 'age': network['age'],
                 'history': history}
