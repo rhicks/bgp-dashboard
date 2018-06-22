@@ -56,12 +56,21 @@ def reverse_dns_query(ip):
         return('(DNS Error)')
 
 
-def dns_query(name):
+def dns_query(name, type='A'):
     """Given a *name*, return the ip dns."""
     try:
         # addr = dns.reversename.from_address(str(ip))
         resolver = dns.resolver.Resolver()
-        return str(resolver.query(str(name), 'A')[0])
+        answers = resolver.query(str(name), type)
+        if type is 'A':
+            return str(answers[0])
+        elif type is 'NS':
+            domains = []
+            for record in answers:
+              domains.append(str(record.target))
+            return domains
+        elif type is 'SOA':
+            return str(answers[0]).split()[0]
     except Exception:
         return('(DNS Error)')
 
