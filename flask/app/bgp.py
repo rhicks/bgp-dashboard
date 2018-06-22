@@ -5,7 +5,7 @@ from flask import Flask, jsonify, render_template
 import constants as C
 from apscheduler.schedulers.background import BackgroundScheduler
 from functions import (asn_name_query, get_ip_json, is_peer, is_transit,
-                       reverse_dns_query)
+                       reverse_dns_query, dns_query)
 from Stats import Stats
 
 app = Flask(__name__)
@@ -189,6 +189,40 @@ def get_transit_prefixes(asn):
                     'name': asn_name_query(asn),
                     'transit_prefix_count': len(prefixes),
                     'transit_prefix_list': prefixes})
+
+
+@app.route('/bgp/api/v1.0/domain/<domain>', methods=['GET'])
+def get_domain(domain):
+    domain.lower()
+    name_servers = str(dns_query(domain, 'NS')).lower()
+    soa = str(dns_query(domain, 'SOA')).lower()
+    local_ns = ''
+    if domain in soa:
+        local_ns = soa
+    else:
+        for ns in name_servers:
+            if domain in ns:
+                local_ns = ns
+    if local_ns is '':
+        return jsonify({})
+    else:
+        domain_ip = str(dns_query(local_ns))
+        ip_data = get_ip_json(domain_ip)
+        asn = ip_data.get('origin_asn')
+        db = myStats.db
+        originated = []
+        prefixes = db.bgp.find({'origin_asn': asn, 'active': True})
+        for prefix in prefixes:
+            originated.append(prefix['_id'])
+
+        return jsonify({'domain': domain,
+                        'A Record': dns_query(domain),
+                        'SOA/NS Record': local_ns,
+                        'SOA/NS IP': domain_ip,
+                        'asn': asn,
+                        'name': asn_name_query(asn),
+                        'originated_prefix_count': len(originated),
+                        'originated_prefix_list': originated})
 
 
 sched = BackgroundScheduler()
