@@ -193,16 +193,16 @@ def get_transit_prefixes(asn):
 
 @app.route('/bgp/api/v1.0/domain/<domain>', methods=['GET'])
 def get_domain(domain):
-    domain.lower()
-    name_servers = str(dns_query(domain, 'NS')).lower()
-    soa = str(dns_query(domain, 'SOA')).lower()
+    domain = domain.lower()
+    org = domain.split('.')[-2]
+    name_servers = dns_query(domain, 'NS')
+    soa = dns_query(domain, 'SOA')
     local_ns = ''
-    if domain in soa:
-        local_ns = soa
-    else:
-        for ns in name_servers:
-            if domain in ns:
-                local_ns = ns
+    if org in soa.lower():
+        local_ns = soa.lower()
+    for ns in name_servers:
+        if org in ns.lower():
+            local_ns = ns.lower()
     if local_ns is '':
         return jsonify({})
     else:
