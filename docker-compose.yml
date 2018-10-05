@@ -1,32 +1,24 @@
-gobgp:
-  build: ./gobgp/
-  ports:
-    - 179:179
-  links:
-    - mongo
-  volumes_from:
-    - data
+version: '2'
+services:
+  gobgp:
+    build: ./gobgp
+    ports:
+      - 179:179
+    volumes:
+      - .:/var/tmp
+    restart: always
 
-mongo:
-  build: ./mongo/
-  expose:
-    - 27017
-  volumes_from:
-    - data
+  mongodb:
+    image: mongo:latest
+    expose:
+      - 27017
+    volumes:
+      - ./db:/data/db
 
-flask:
-  build: ./flask/
-  ports:
-    - 80:80
-  links:
-    - mongo
-  volumes_from:
-    - data
-
-data:
-  image: ubuntu:14.04
-  volumes:
-    - ./flask/app:/var/www/app
-    - ./flask/app/log:/var/log/uwsgi/app
-    - .:/var/tmp
-  command: "true"
+  flask:
+    build: ./flask
+    ports:
+      - 80:80
+    volumes:
+      - ./flask/app:/var/www/app
+      - ./flask/app/log:/var/log/uwsgi/app

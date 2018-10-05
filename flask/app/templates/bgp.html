@@ -172,7 +172,7 @@
               <div class="col-md-12">
                 <div class="x_panel">
                   <div class="x_title">
-                    <h2>Peer Data <small>Table</small></h2>
+                    <h2>Peer Data <small>Updated every 60s</small></h2>
                     <div class="clearfix"></div>
                   </div>
                   <div class="x_content">
@@ -183,24 +183,13 @@
                         <tr>
                           <th>ASN</th>
                           <th>Name</th>
-                          <th>IPv4 Prefixes</th>
-                          <th>IPv6 Prefixes</th>
-                          <th>Details</th>
+                          <th>IPv4 Prefixes<br>Originated</th>
+                          <th>IPv4 Prefixes<br>NextHop</th>
+                          <th>IPv6 Prefixes<br>Originated</th>
+                          <th>IPv6 Prefixes<br>NextHop</th>
+                          <th>Downstream<br>ASN Count</th>
                         </tr>
                       </thead>
-
-
-                      <tbody>
-                        {% for peer in peers %}
-                        <tr>
-                          <td>{{ peer.asn }}</td>
-                          <td>{{ peer.name }}</td>
-                          <td>{{ peer.ipv4_count }}</td>
-                          <td>{{ peer.ipv6_count }}</td>
-                          <td><a href="/bgp/api/v1.0/asn/{{peer.asn}}">Details</a></td>
-                        </tr>
-                        {% endfor %}
-                      </tbody>
                     </table>
                       </div>
                     </div>
@@ -325,14 +314,6 @@
 
     <!-- Custom Theme Scripts -->
     <!-- <script src="../static/js/custom.min.js"></script> -->
-  <script>
-    $(document).ready(function() {
-      $('#datatable').dataTable(
-        {"oLanguage": {
-          "sSearch": "Filter Table: "
-        }});
-    });
-  </script>
 
   <script>
   function up_or_down_checker(css_tag, data, json_tag)
@@ -376,6 +357,7 @@
     }
   }
 
+  var stats = jQuery.getJSON("/bgp/api/v1.0/stats")
   var peer_count_sparkline_data = [];
   var ipv4_table_sparkline_data = [];
   var ipv6_table_sparkline_data = [];
@@ -384,6 +366,29 @@
   var customer_count_data = [];
   var customer_ipv4_prefix_data = [];
   var customer_ipv6_prefix_data = [];
+
+  var peers_table = jQuery('#datatable').DataTable({
+        ajax: {
+          url: "/bgp/api/v1.0/stats",
+          dataSrc: "peers"
+      },
+      columns: [
+          { data: "asn", render: function (asn) {return '<a href=/bgp/api/v1.0/asn/'+asn+'>'+asn+'</a>';} },
+          { data: "name" },
+          { data: "ipv4_origin_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/originated/ipv4>'+full.ipv4_origin_count+'</a>';} },
+          { data: "ipv4_nexthop_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/nexthop/ipv4>'+full.ipv4_nexthop_count+'</a>';} },
+          { data: "ipv6_origin_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/originated/ipv6>'+full.ipv6_origin_count+'</a>';} },
+          { data: "ipv6_nexthop_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/nexthop/ipv6>'+full.ipv6_nexthop_count+'</a>';} },
+          { data: "asn_count", render: function (data, type, full, meta) {return '<a href=/bgp/api/v1.0/asn/'+full.asn+'/downstream>'+full.asn_count+'</a>';} }
+      ],
+        "oLanguage":
+        {
+        "sSearch": "Filter Table: "
+      },
+        paging: false,
+        scrollY: 400
+      });
+
 
   function update_counters()
   {
@@ -455,12 +460,13 @@
         // customer_ipv6_prefix_data.shift();
         customer_ipv6_prefix_data.splice(0, (sparkline_data_width - sparkline_max_width))
       }
-      //update_sparklines(data, 2)
+      update_sparklines(data, 1)
+      peers_table.ajax.reload(null, false)
     });
   }
 
   jQuery(document).ready(update_counters());
-  setInterval(function() { update_counters() }, 4000);
+  setInterval(function() { update_counters() }, 2000);
 
   </script>
 

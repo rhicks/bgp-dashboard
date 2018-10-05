@@ -1,4 +1,10 @@
-log/
-*.pyc
-old-logs/
-testing-query-script.py
+**.pyc
+**/log
+!/log/sample_data.log
+**/__pycache__
+**/.ropeproject
+/db
+!.gitkeep
+**/venv
+*.vscode
+*.idea
