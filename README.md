@@ -29,7 +29,7 @@ The GoBGP container serves two functions:
   - Configure [gobgpd.conf](https://github.com/rhicks/bgp-dash/blob/master/gobgp/gobgpd.conf) to peer with the real network.
   - Only IPv4-Unicast and IPv6-Unicast supported at this time.
 - Pass BGP updates into BGP
-  - The [bgp-mongo-bulk-load.py](https://github.com/rhicks/bgp-dash/blob/master/bgp-mongo-bulk-load.py) script pipes the JSON updates from GoBGP into the MongoDB container
+  - The [bgp-mongo-bulk-load.py](https://github.com/rhicks/bgp-dash/blob/master/gobgp_to_mongo.py) script pipes the JSON updates from GoBGP into the MongoDB container
 
 ###### MongoDB
 - Mongo receives JSON updates from the GoBGP container
@@ -51,7 +51,7 @@ Install
 $ git clone https://github.com/rhicks/bgp-dashboard.git
 $ cd bgp-dashboard
 $ # modify ./gobgp/gobgpd.conf to peer with your network
-$ # modify ./flask/app/hello.py globals to support your network BGP communities
+$ # modify ./flask/app/constants.py globals to use your ASN and BGP communities
 $ docker-compose build
 $ docker-compose up (watch the log to verify BGP peeering is established)
 ```
