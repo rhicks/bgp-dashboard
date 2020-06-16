@@ -10,8 +10,8 @@ RUN apk add --no-cache python3 && \
 
 COPY ./requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt \
-  && wget https://github.com/osrg/gobgp/releases/download/v2.8.0/gobgp_2.8.0_linux_amd64.tar.gz \
-  && tar -xzvf gobgp_2.8.0_linux_amd64.tar.gz \
+  && wget https://github.com/osrg/gobgp/releases/download/v2.17.0/gobgp_2.17.0_linux_amd64.tar.gz \
+  && tar -xzvf gobgp_2.17.0_linux_amd64.tar.gz \
   && mkdir /root/gobgp \
   && mv gobgp /root/gobgp/gobgp \
   && mv gobgpd /root/gobgp/gobgpd \
