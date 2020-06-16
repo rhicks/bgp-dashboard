@@ -1,23 +1,25 @@
-# FROM osrg/gobgp:latest
-FROM ubuntu:17.10
+FROM alpine:3.10
 
-RUN apt-get update
-RUN apt-get remove -y binutils
-RUN apt-get install -y python3.6
-RUN apt-get install -y python3-pip
-RUN apt-get install -y wget
+RUN apk add --no-cache python3 && \
+    if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
+    python3 -m ensurepip && \
+    rm -r /usr/lib/python*/ensurepip && \
+    pip3 install --no-cache --upgrade pip setuptools wheel && \
+    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
+    apk add --no-cache wget
+
 COPY ./requirements.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt
-RUN wget https://github.com/osrg/gobgp/releases/download/v1.32/gobgp_1.32_linux_amd64.tar.gz
-RUN tar -xzvf gobgp_1.32_linux_amd64.tar.gz
-RUN mkdir /root/gobgp
-RUN mv gobgp /root/gobgp/gobgp
-RUN mv gobgpd /root/gobgp/gobgpd
-RUN chmod +x /root/gobgp/gobgp
-RUN chmod +x /root/gobgp/gobgpd
+RUN pip3 install -r /tmp/requirements.txt \
+  && wget https://github.com/osrg/gobgp/releases/download/v2.8.0/gobgp_2.8.0_linux_amd64.tar.gz \
+  && tar -xzvf gobgp_2.8.0_linux_amd64.tar.gz \
+  && mkdir /root/gobgp \
+  && mv gobgp /root/gobgp/gobgp \
+  && mv gobgpd /root/gobgp/gobgpd \
+  && chmod +x /root/gobgp/gobgp \
+  && chmod +x /root/gobgp/gobgpd
 COPY ./gobgpd.conf /root/gobgp/gobgpd.conf
 COPY ./entrypoint.sh /root/gobgp/entrypoint.sh
-RUN chmod +x /root/gobgp/entrypoint.sh
 COPY ./startup.sh /root/gobgp/startup.sh
-RUN chmod +x /root/gobgp/startup.sh
-ENTRYPOINT /root/gobgp/entrypoint.sh
+RUN chmod +x /root/gobgp/entrypoint.sh \
+  && chmod +x /root/gobgp/startup.sh
+ENTRYPOINT [ "/root/gobgp/entrypoint.sh" ]

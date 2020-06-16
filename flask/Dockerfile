@@ -1,27 +1,26 @@
-FROM ubuntu:17.10
+FROM alpine:3.10
 
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update
-RUN apt-get remove -y binutils
-RUN apt-get install -y python3.6
-RUN apt-get install -y python3-pip
-RUN apt-get install -y python-dev
-RUN apt-get install -y uwsgi-plugin-python
-RUN apt-get install -y nginx
-RUN apt-get install -y supervisor
-RUN echo 'Etc/UTC' >/etc/timezone
-RUN apt-get install -y --reinstall tzdata
-COPY nginx/flask.conf /etc/nginx/sites-available/
-COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN apk add --no-cache python3 && \
+    if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
+    python3 -m ensurepip && \
+    rm -r /usr/lib/python*/ensurepip && \
+    pip3 install --no-cache --upgrade pip setuptools wheel && \
+    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
+    apk add --no-cache supervisor nginx uwsgi-python3 python3-dev build-base linux-headers pcre-dev && \
+    mkdir -p /supervisor/
+COPY nginx/flask.conf /etc/nginx/conf.d/flask.conf
+COPY supervisor/supervisord.conf /supervisor/supervisord.conf
 COPY app/requirements.txt /tmp/requirements.txt
 
 RUN mkdir -p /var/log/nginx/app /var/log/uwsgi/app /var/log/supervisor /var/www/app \
-    && rm /etc/nginx/sites-enabled/default \
-    && ln -s /etc/nginx/sites-available/flask.conf /etc/nginx/sites-enabled/flask.conf \
+    && mkdir /www \
+    && mkdir /run/nginx \
+    && rm /etc/nginx/conf.d/default.conf \
+    && chown -R nginx:nginx /var/lib/nginx \
+    && chown -R nginx:nginx /www \
     && echo "daemon off;" >> /etc/nginx/nginx.conf \
     && pip3 install -r /tmp/requirements.txt \
-    && chown -R www-data:www-data /var/www/app \
-    && chown -R www-data:www-data /var/log
+    && chown -R nginx:nginx /var/www/app \
+    && chown -R nginx:nginx /var/log
 
-CMD ["/usr/bin/supervisord"]
+CMD ["/usr/bin/supervisord", "-c/supervisor/supervisord.conf"]
