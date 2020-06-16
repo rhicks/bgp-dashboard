@@ -5,12 +5,14 @@
 trigger:
 - master
 - renovate/*
+- dev/*
 
 pr:
   branches:
     include:
     - master
     - renovate/*
+    - dev/*
 
 resources:
 - repo: self
