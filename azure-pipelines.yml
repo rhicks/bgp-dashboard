@@ -4,6 +4,7 @@
 
 trigger:
 - master
+- renovate/*
 
 pr:
   branches:
