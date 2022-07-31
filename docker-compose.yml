@@ -20,5 +20,5 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./flask/app:/var/www/app
-      - ./flask/app/log:/var/log/uwsgi/app
+      - ./flask/app:/app
+      # - ./flask/app/log:/var/log/uwsgi/app

@@ -1,4 +1,6 @@
 import threading
+import time
+import sched
 
 from flask import Flask, jsonify, render_template
 
@@ -16,6 +18,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 @app.route('/', methods=['GET'])
 def bgp_index():
     data = myStats.get_data()
+    myStats.update_stats()
     top_peers = data['top_n_peers']
     cidr_breakdown = data['cidr_breakdown']
     communities = data['communities']
@@ -203,7 +206,7 @@ def get_domain(domain):
     for ns in name_servers:
         if org in ns.lower():
             local_ns = ns.lower()
-    if local_ns is '':
+    if local_ns == '':
         return jsonify({})
     else:
         domain_ip = str(dns_query(local_ns))

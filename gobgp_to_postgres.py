@@ -3,8 +3,8 @@
 import sys
 import json
 import bgp_attributes as BGP
-from pymongo import MongoClient
-import pymongo
+# from pymongo import MongoClient
+# import pymongo
 from copy import copy
 from datetime import datetime
 import ipaddress
@@ -14,11 +14,9 @@ import logging
 
 # DEFAULTS - UPDATE ACCORDINGLY
 MAX_PREFIX_HISTORY = 100  # None = unlimited (BGP flapping will likely kill DB if unlimited)
-MONGODBSERVER = "mongodb" # Name of Docker instance
-# MONGODBSERVER = "localhost" # For local develop
 
 
-def db_connect(host=MONGODBSERVER):
+def db_connect(host='mongodb'):
     """Return a connection to the Mongo Database."""
     client = MongoClient(host=host)
     return client.bgp
@@ -29,12 +27,12 @@ def initialize_database(db):
     # db.bgp.drop()
     db.bgp.create_index('nexthop')
     db.bgp.create_index('nexthop_asn')
-    db.bgp.create_index([('nexthop', pymongo.ASCENDING)])
-    db.bgp.create_index([('nexthop_asn', pymongo.ASCENDING)])
-    db.bgp.create_index([('ip_version', pymongo.ASCENDING)])
-    db.bgp.create_index([('origin_asn', pymongo.ASCENDING), ('ip_version', pymongo.ASCENDING)])
-    db.bgp.create_index([('communities', pymongo.ASCENDING)])
-    db.bgp.create_index([('as_path.1', pymongo.ASCENDING), ('nexthop_asn', pymongo.ASCENDING)])
+    db.bgp.create_index([('nexthop', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('nexthop_asn', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('origin_asn', pymongo.ASCENDING), ('ip_version', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('communities', pymongo.ASCENDING), ('active', pymongo.ALL)])
+    db.bgp.create_index([('as_path.1', pymongo.ASCENDING), ('nexthop_asn', pymongo.ASCENDING), ('active', pymongo.ALL)])
     db.bgp.update_many(
         {"active": True},  # Search for
         {"$set": {"active": False}})  # Replace with
@@ -66,15 +64,13 @@ def compare_prefixes(new, old):
 
 def community_32bit_to_string(number):
     """Given a 32bit number, convert to standard bgp community format XXX:XX"""
-    if number != 0:
+    if number is not 0:
         return f'{int(bin(number)[:-16], 2)}:{int(bin(number)[-16:], 2)}'  # PEP 498
 
 
 def build_json(update_entry):
     """Given an update entry from GoBGP, set the BGP attribue types as a
     key/value dict and return"""
-    if not update_entry:
-        return None
     update_json = {  # set defaults
         '_id': update_entry['nlri']['prefix'],
         'ip_version': ipaddress.ip_address(update_entry['nlri']['prefix'].split('/', 1)[0]).version,
@@ -165,17 +161,17 @@ def update_prefix(prefix_from_gobgp, prefix_from_database):
 
 
 def main():
-    db = db_connect()
-    initialize_database(db)
+    # db = db_connect()
+    # initialize_database(db)
     for line in sys.stdin:
         prefix_from_gobgp = build_json(get_update_entry(line))
-        if prefix_from_gobgp:
-            prefix_from_database = db.bgp.find_one({'_id': prefix_from_gobgp['_id']})
-            if prefix_from_database:
-                updated_prefix = update_prefix(prefix_from_gobgp, prefix_from_database)
-                db.bgp.update_one({"_id": prefix_from_database['_id']}, {"$set": updated_prefix}, upsert=True)
-            else:
-                db.bgp.update_one({"_id": prefix_from_gobgp['_id']}, {"$set": prefix_from_gobgp}, upsert=True)
+        print(prefix_from_gobgp)
+        # prefix_from_database = db.bgp.find_one({'_id': prefix_from_gobgp['_id']})
+        # if prefix_from_database:
+        #     updated_prefix = update_prefix(prefix_from_gobgp, prefix_from_database)
+        #     db.bgp.update({"_id": prefix_from_database['_id']}, updated_prefix, upsert=True)
+        # else:
+        #     db.bgp.update({"_id": prefix_from_gobgp['_id']}, prefix_from_gobgp, upsert=True)
 
 
 if __name__ == "__main__":

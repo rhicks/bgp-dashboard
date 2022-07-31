@@ -62,14 +62,14 @@ def dns_query(name, type='A'):
         # addr = dns.reversename.from_address(str(ip))
         resolver = dns.resolver.Resolver()
         answers = resolver.query(str(name), type)
-        if type is 'A':
+        if type == 'A':
             return str(answers[0])
-        elif type is 'NS':
+        elif type == 'NS':
             domains = []
             for record in answers:
               domains.append(str(record.target))
             return domains
-        elif type is 'SOA':
+        elif type == 'SOA':
             return str(answers[0]).split()[0]
     except Exception:
         return('(DNS Error)')

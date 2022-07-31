@@ -1,5 +1,3 @@
-uwsgi
-flask
 pymongo
 dnspython
 requests
