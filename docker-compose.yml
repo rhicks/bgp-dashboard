@@ -1,12 +1,12 @@
 version: '2'
 services:
-  gobgp:
-    build: ./gobgp
-    ports:
-      - 179:179
-    volumes:
-      - .:/var/tmp
-    restart: always
+  # gobgp:
+  #   build: ./gobgp
+  #   ports:
+  #     - 179:179
+  #   volumes:
+  #     - .:/var/tmp
+  #   restart: always
 
   mongodb:
     image: mongo:latest
@@ -15,10 +15,18 @@ services:
     volumes:
       - ./db:/data/db
 
-  flask:
-    build: ./flask
+  # flask:
+  #   build: ./flask
+  #   ports:
+  #     - 80:80
+  #   volumes:
+  #     - ./flask/app:/app
+  #     # - ./flask/app/log:/var/log/uwsgi/app
+
+  fastapi:
+    build: ./fastapi
     ports:
       - 80:80
     volumes:
-      - ./flask/app:/app
+      - ./fastapi:/code
       # - ./flask/app/log:/var/log/uwsgi/app

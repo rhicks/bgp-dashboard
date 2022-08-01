@@ -1,0 +1,6 @@
+pymongo
+dnspython
+ipaddress
+uvicorn
+fastapi
+motor
