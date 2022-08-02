@@ -68,7 +68,22 @@ async def peer_count():
 async def get_peers():
     # peer_json = json.dumps(get_list_of(peers=True))
     # return peer_json
-    return get_list_of(peers=True)
+    # return get_list_of(peers=True)
+    list_of_peers = set()
+    peer_details = []
+    db_query = db.bgp.find({'active': True})
+    results = await db_query.to_list(length=None)
+    for prefix in results:
+        list_of_peers.add(prefix['nexthop_asn'])
+    for asn in list_of_peers:
+        peer_details.append({"asn": asn, "name": asn_name_query(asn),
+                             "ipv4_origin_count": await db.bgp.count_documents({'origin_asn': asn, 'ip_version': 4, 'active': True}),
+                             "ipv6_origin_count": await db.bgp.count_documents({'origin_asn': asn, 'ip_version': 6, 'active': True}),
+                             "ipv4_nexthop_count": await db.bgp.count_documents({'nexthop_asn': asn, 'ip_version': 4, 'active': True}),
+                             "ipv6_nexthop_count": await db.bgp.count_documents({'nexthop_asn': asn, 'ip_version': 6, 'active': True}),
+                             "asn_count":  len(await db.bgp.distinct('as_path.1', {'nexthop_asn': asn, 'active': True}))})
+
+    return peer_details
 
 
 async def get_list_of(customers=False, peers=False, community=CUSTOMER_BGP_COMMUNITY):
